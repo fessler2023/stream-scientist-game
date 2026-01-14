@@ -1,7 +1,7 @@
 const config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
+    width: window.innerWidth,
+    height: window.innerHeight,
     backgroundColor: '#5DADE2', // light blue = stream/lake
     physics: {
         default: 'arcade',
@@ -13,6 +13,10 @@ const config = {
         preload,
         create,
         update
+    },
+    scale: {
+        mode: Phaser.Scale.RESIZE,        // canvas resizes with browser
+        autoCenter: Phaser.Scale.CENTER_BOTH
     }
 };
 
@@ -26,7 +30,6 @@ let score = 0;
 let scoreText;
 
 function preload() {
-    // Your sprites
     this.load.image('player', 'player.png'); 
     this.load.image('rock', 'rock.png');     
     this.load.image('species', 'bug.png');   
@@ -35,14 +38,14 @@ function preload() {
 }
 
 function create() {
-    // Add environment objects
-    this.add.image(100, 100, 'tree').setScale(0.5);
-    this.add.image(700, 150, 'bush').setScale(0.5);
-    this.add.image(300, 400, 'tree').setScale(0.5);
-    this.add.image(600, 500, 'bush').setScale(0.5);
+    // Environment objects - positions now relative to screen size
+    this.add.image(window.innerWidth * 0.1, window.innerHeight * 0.15, 'tree').setScale(0.5);
+    this.add.image(window.innerWidth * 0.85, window.innerHeight * 0.2, 'bush').setScale(0.5);
+    this.add.image(window.innerWidth * 0.35, window.innerHeight * 0.65, 'tree').setScale(0.5);
+    this.add.image(window.innerWidth * 0.75, window.innerHeight * 0.85, 'bush').setScale(0.5);
 
-    // Add player near bottom of screen
-    player = this.physics.add.sprite(400, 500, 'player').setScale(0.5);
+    // Player starts near bottom center
+    player = this.physics.add.sprite(window.innerWidth/2, window.innerHeight * 0.8, 'player').setScale(0.5);
     player.setCollideWorldBounds(true);
 
     // Score display
@@ -50,13 +53,13 @@ function create() {
 
     cursors = this.input.keyboard.createCursorKeys();
 
-    // Rock positions along a stream / shore
+    // Rock positions along “stream” - scaled to screen
     const rockPositions = [
-        {x: 200, y: 300},
-        {x: 350, y: 250},
-        {x: 500, y: 200},
-        {x: 650, y: 300},
-        {x: 400, y: 150},
+        {x: window.innerWidth * 0.25, y: window.innerHeight * 0.5},
+        {x: window.innerWidth * 0.45, y: window.innerHeight * 0.4},
+        {x: window.innerWidth * 0.65, y: window.innerHeight * 0.35},
+        {x: window.innerWidth * 0.75, y: window.innerHeight * 0.55},
+        {x: window.innerWidth * 0.5,  y: window.innerHeight * 0.25},
     ];
 
     rockPositions.forEach((pos, index) => {
@@ -64,15 +67,12 @@ function create() {
         rocks.push(rock);
 
         rock.on('pointerdown', () => {
-            // Only allow collection if player is close
             if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
-                // spawn species on top of rock
                 const species = this.add.sprite(rock.x, rock.y, 'species').setScale(0.3);
-                collectedSpecies.push('species'+(index+1)); // store species key
+                collectedSpecies.push('species'+(index+1));
                 score += 10;
                 scoreText.setText('Score: ' + score);
 
-                // Fade out rock for visual effect
                 this.tweens.add({
                     targets: rock,
                     alpha: 0,
@@ -87,7 +87,6 @@ function create() {
 }
 
 function update() {
-    // Reset velocity
     player.setVelocity(0);
     const speed = 200;
 
@@ -97,3 +96,9 @@ function update() {
     if (cursors.up.isDown) player.setVelocityY(-speed);
     else if (cursors.down.isDown) player.setVelocityY(speed);
 }
+
+// Optional: handle window resize dynamically
+window.addEventListener('resize', () => {
+    game.scale.resize(window.innerWidth, window.innerHeight);
+});
+
