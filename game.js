@@ -50,7 +50,7 @@ function create() {
     ];
 
     rockPositions.forEach((pos, index) => {
-        const rock = this.physics.add.sprite(pos.x, pos.y, 'rock').setScale(2).setInteractive();
+        const rock = this.physics.add.sprite(pos.x, pos.y, 'rock').setScale(1).setInteractive();
         rocks.push(rock);
 
         rock.on('pointerdown', () => {
@@ -81,4 +81,5 @@ function update() {
     if (cursors.up.isDown) player.setVelocityY(-speed);
     else if (cursors.down.isDown) player.setVelocityY(speed);
 }
+
 
