@@ -26,34 +26,34 @@ let scoreText;
 
 function preload() {
     // Load your PNG for player and bug
-    this.load.image('player', 'bug.png'); // reuse the bug.png for now
-    this.load.image('bug', 'bug.png'); // bug sprite
-    // Optional: simple bush/rock placeholders
-    this.load.image('bush', 'https://i.imgur.com/3k0Q0KX.png'); // tiny placeholder
+    this.load.image('player', 'bug.png'); // reuse your PNG for now
+    this.load.image('bug', 'bug.png');    // bug sprite
+    // Simple bush placeholder (any small image URL works)
+    this.load.image('bush', 'https://i.imgur.com/3k0Q0KX.png');
 }
 
 function create() {
     // Add some “bushes/rocks” as obstacles
-    this.add.image(200, 150, 'bush');
-    this.add.image(600, 400, 'bush');
-    this.add.image(400, 300, 'bush');
+    this.add.image(200, 150, 'bush').setScale(0.5);
+    this.add.image(600, 400, 'bush').setScale(0.5);
+    this.add.image(400, 300, 'bush').setScale(0.5);
 
-    // Add player in center
-    player = this.physics.add.sprite(400, 500, 'player');
+    // Add player in center, scale down
+    player = this.physics.add.sprite(400, 500, 'player').setScale(0.3);
     player.setCollideWorldBounds(true);
 
-    // Add multiple bugs randomly
-    for (let i = 0; i < 3; i++) {
+    // Add multiple bugs randomly, scaled smaller
+    for (let i = 0; i < 5; i++) {
         const x = Phaser.Math.Between(50, 750);
         const y = Phaser.Math.Between(50, 550);
-        let bug = this.physics.add.sprite(x, y, 'bug').setInteractive();
+        let bug = this.physics.add.sprite(x, y, 'bug').setInteractive().setScale(0.15);
         bugs.push(bug);
 
         // Click to catch bug
         bug.on('pointerdown', () => {
             score += 10;
             scoreText.setText('Score: ' + score);
-            bug.destroy(); // remove bug
+            bug.destroy(); // bug disappears after catch
         });
     }
 
@@ -82,5 +82,4 @@ function update() {
         player.setVelocityY(speed);
     }
 }
-
 
