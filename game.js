@@ -11,8 +11,8 @@ let score = 0;
 // --------------------------
 // Frame IDs for assets
 // --------------------------
-const GRASS = 1;
-const WATER = 5;
+const GRASS = 0;
+const WATER = 1;
 const ROCK = 42;
 const BUSH = 38;
 const TREE = 70;
@@ -171,4 +171,5 @@ function update() {
 window.addEventListener('resize', () => {
     game.scale.resize(window.innerWidth, window.innerHeight);
 });
+
 
