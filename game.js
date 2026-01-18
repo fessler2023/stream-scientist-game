@@ -1,21 +1,8 @@
-// --------------------------
-// Game constants
-// --------------------------
-const TILE_SIZE = 16;
-const SCALE = 2;
-let player;
-let cursors;
-let rocks = [];
-let score = 0;
-
-// --------------------------
-// Phaser configuration
-// --------------------------
 const config = {
     type: Phaser.AUTO,
     width: window.innerWidth,
     height: window.innerHeight,
-    backgroundColor: '#5DADE2',
+    backgroundColor: '#5DADE2', // light blue = stream/lake
     physics: {
         default: 'arcade',
         arcade: { debug: false }
@@ -29,136 +16,83 @@ const config = {
 
 const game = new Phaser.Game(config);
 
-// --------------------------
-// Preload assets
-// --------------------------
+let player;
+let cursors;
+let rocks = [];
+let collectedSpecies = [];
+let score = 0;
+let scoreText;
+
 function preload() {
-    this.load.spritesheet('overworld', 'assets/Overworld.png', { frameWidth: TILE_SIZE, frameHeight: TILE_SIZE });
-    this.load.spritesheet('objects', 'assets/objects.png', { frameWidth: TILE_SIZE, frameHeight: TILE_SIZE });
-    this.load.spritesheet('player', 'assets/character.png', { frameWidth: TILE_SIZE, frameHeight: TILE_SIZE });
+    // Make sure the PNGs are in "assets" folder if you're using that folder
+    this.load.image('player', 'assets/player.png');
+    this.load.image('rock', 'assets/rock.png');
+    this.load.image('species', 'assets/bug.png');
+    this.load.image('tree', 'assets/tree.png');
+    this.load.image('bush', 'assets/bush.png');
 }
 
-// --------------------------
-// Create the game world
-// --------------------------
 function create() {
-    const solidObjects = this.physics.add.staticGroup();
-    rocks = [];
-
-    // --------------------------
-    // TEMP: Display first 20 frames for debugging
-    // --------------------------
-    for (let i = 0; i < 20; i++) {
-        this.add.image(16*i, 0, 'overworld', i).setScale(2).setOrigin(0);
-        this.add.image(16*i, 32, 'objects', i).setScale(2).setOrigin(0);
-    }
-
-    // --------------------------
-    // Once you confirm which frame number is which, update these constants:
-    // --------------------------
-    const GRASS = 0;    // <-- frame number of grass in Overworld.png
-    const WATER = 1;    // <-- frame number of water in Overworld.png
-    const ROCK  = 42;   // <-- frame number of rock in Objects.png
-    const BUSH  = 38;   // <-- frame number of bush in Objects.png
-    const TREE  = 70;   // <-- frame number of tree in Objects.png
-    const PLAYER_START_FRAME = 0; // frame for your character sprite
-
-    // --------------------------
-    // Level 1 map layout
-    // 0 = empty, 1 = grass, 2 = water
-    // 3 = rocks, 4 = bush, 5 = tree
-    // --------------------------
-    const LEVEL_1 = [
-        [0,0,0,0,0,0,0,0,0,0],
-        [0,1,1,1,1,1,1,1,1,0],
-        [0,1,2,2,1,1,3,3,1,0],
-        [0,1,2,2,1,1,3,3,1,0],
-        [0,1,1,1,1,1,1,1,1,0],
-        [0,1,4,1,1,5,1,4,1,0],
-        [0,1,1,1,1,1,1,1,1,0],
-        [0,0,0,0,0,0,0,0,0,0],
+    // -------------------------
+    // Environment objects
+    // -------------------------
+    const envObjects = [
+        { key: 'tree', x: 0.1, y: 0.15 },
+        { key: 'bush', x: 0.85, y: 0.2 },
+        { key: 'tree', x: 0.35, y: 0.65 },
+        { key: 'bush', x: 0.75, y: 0.85 }
     ];
 
-    // --------------------------
-    // Centering offsets
-    // --------------------------
-    const mapWidthPx = LEVEL_1[0].length * TILE_SIZE * SCALE;
-    const mapHeightPx = LEVEL_1.length * TILE_SIZE * SCALE;
-    const offsetX = (this.scale.width - mapWidthPx) / 2;
-    const offsetY = (this.scale.height - mapHeightPx) / 2;
-
-    // --------------------------
-    // Build the world
-    // --------------------------
-    LEVEL_1.forEach((row, y) => {
-        row.forEach((tile, x) => {
-            const worldX = offsetX + x * TILE_SIZE * SCALE;
-            const worldY = offsetY + y * TILE_SIZE * SCALE;
-
-            switch(tile) {
-                case 1: // Grass
-                    this.add.image(worldX, worldY, 'overworld', GRASS)
-                        .setOrigin(0)
-                        .setScale(SCALE);
-                    break;
-                case 2: // Water
-                    this.add.image(worldX, worldY, 'overworld', WATER)
-                        .setOrigin(0)
-                        .setScale(SCALE);
-                    break;
-                case 3: // Rock
-                    const rock = this.physics.add.sprite(
-                        worldX + TILE_SIZE,
-                        worldY + TILE_SIZE,
-                        'objects',
-                        ROCK
-                    ).setScale(SCALE).setInteractive();
-                    rocks.push(rock);
-                    break;
-                case 4: // Bush
-                    solidObjects.create(
-                        worldX + TILE_SIZE,
-                        worldY + TILE_SIZE,
-                        'objects',
-                        BUSH
-                    ).setScale(SCALE);
-                    break;
-                case 5: // Tree
-                    solidObjects.create(
-                        worldX + TILE_SIZE,
-                        worldY + TILE_SIZE,
-                        'objects',
-                        TREE
-                    ).setScale(SCALE);
-                    break;
-            }
-        });
+    envObjects.forEach(obj => {
+        this.add.image(window.innerWidth * obj.x, window.innerHeight * obj.y, obj.key)
+            .setScale(0.5)
+            .setOrigin(0.5, 0.5);
     });
 
-    // --------------------------
-    // Player sprite
-    // --------------------------
-    player = this.physics.add.sprite(
-        offsetX + 5 * TILE_SIZE * SCALE,
-        offsetY + 6 * TILE_SIZE * SCALE,
-        'player',
-        PLAYER_START_FRAME
-    ).setScale(SCALE);
+    // -------------------------
+    // Player
+    // -------------------------
+    player = this.physics.add.sprite(window.innerWidth / 2, window.innerHeight * 0.8, 'player')
+        .setScale(0.5)
+        .setCollideWorldBounds(true);
 
-    player.setCollideWorldBounds(true);
-    this.physics.add.collider(player, solidObjects);
+    // -------------------------
+    // Score display
+    // -------------------------
+    scoreText = this.add.text(10, 10, 'Score: 0', { font: '20px Arial', fill: '#fff' });
 
     cursors = this.input.keyboard.createCursorKeys();
 
-    // --------------------------
-    // Rock interaction
-    // --------------------------
-    rocks.forEach((rock) => {
+    // -------------------------
+    // Rock positions
+    // -------------------------
+    const rockPositions = [
+        { x: 0.25, y: 0.5 },
+        { x: 0.45, y: 0.4 },
+        { x: 0.65, y: 0.35 },
+        { x: 0.75, y: 0.55 },
+        { x: 0.5, y: 0.25 },
+    ];
+
+    rockPositions.forEach((pos, index) => {
+        const rock = this.physics.add.sprite(window.innerWidth * pos.x, window.innerHeight * pos.y, 'rock')
+            .setScale(0.5)
+            .setInteractive();
+        rocks.push(rock);
+
         rock.on('pointerdown', () => {
-            if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 40) {
+            if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
+                const species = this.add.sprite(rock.x, rock.y, 'species').setScale(0.3);
+                collectedSpecies.push('species' + (index + 1));
                 score += 10;
-                console.log('Macroinvertebrate found under rock!');
-                rock.destroy();
+                scoreText.setText('Score: ' + score);
+
+                this.tweens.add({
+                    targets: rock,
+                    alpha: 0,
+                    duration: 300,
+                    onComplete: () => rock.destroy()
+                });
             } else {
                 console.log('Move closer to flip the rock!');
             }
@@ -166,12 +100,9 @@ function create() {
     });
 }
 
-// --------------------------
-// Game update loop
-// --------------------------
 function update() {
     player.setVelocity(0);
-    const speed = 120;
+    const speed = 200;
 
     if (cursors.left.isDown) player.setVelocityX(-speed);
     else if (cursors.right.isDown) player.setVelocityX(speed);
@@ -180,10 +111,9 @@ function update() {
     else if (cursors.down.isDown) player.setVelocityY(speed);
 }
 
-// --------------------------
+// -------------------------
 // Handle window resize
-// --------------------------
+// -------------------------
 window.addEventListener('resize', () => {
     game.scale.resize(window.innerWidth, window.innerHeight);
 });
-
