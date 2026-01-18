@@ -8,16 +8,59 @@
             margin: 0;
             overflow: hidden;
             background: #000;
+            font-family: monospace;
+        }
+
+        /* Title bar at top */
+        #titleBar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 8px;
+            text-align: center;
+            font-size: 18px;
+            background: #222;
+            color: #fff;
+            z-index: 1000;
+        }
+
+        /* Explorer panel at bottom-left */
+        #explorer {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            width: 260px;
+            padding: 10px;
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            border: 2px solid #aaa;
+            z-index: 1000;
+        }
+
+        #explorer img {
+            width: 64px;
+            height: 64px;
+            image-rendering: pixelated;
+            display: block;
+            margin-bottom: 8px;
         }
     </style>
 </head>
 <body>
 
+<!-- Title bar -->
+<div id="titleBar">The Adventures of Little Doug</div>
+
+<!-- Explorer panel -->
+<div id="explorer">
+    <img id="explorerImage" src="" alt="Insect Preview" />
+    <h3 id="explorerName">Discover an insect</h3>
+    <p id="explorerText">Flip rocks to learn what lives beneath the surface.</p>
+</div>
+
+<!-- Phaser scripts -->
 <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
 <script src="game.js"></script>
 
 </body>
 </html>
-
-
-
