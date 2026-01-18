@@ -5,7 +5,7 @@ const config = {
     type: Phaser.AUTO,
     width: window.innerWidth,
     height: window.innerHeight,
-    backgroundColor: '#5DADE2',
+    backgroundColor: '#5DADE2', // light blue = stream/lake
     physics: { default: 'arcade', arcade: { debug: false } },
     scene: { preload, create, update },
     scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH }
@@ -35,18 +35,30 @@ const macroinvertebrates = [
 // Environment Data
 // -------------------------
 const envObjects = [
-    { key: 'tree', x: 0.1, y: 0.15 },
-    { key: 'bush', x: 0.85, y: 0.2 },
-    { key: 'tree', x: 0.35, y: 0.65 },
-    { key: 'bush', x: 0.75, y: 0.85 }
+    // bushes (smaller scale)
+    { key: 'bush', x: 0.85, y: 0.2, scale: 0.3 },
+    { key: 'bush', x: 0.75, y: 0.85, scale: 0.3 },
+    { key: 'bush', x: 0.4, y: 0.7, scale: 0.3 },
+    { key: 'bush', x: 0.2, y: 0.4, scale: 0.3 },
+
+    // trees (top border, layered)
+    { key: 'tree', x: 0.05, y: 0.05, scale: 0.5, depth: 1 },
+    { key: 'tree', x: 0.25, y: 0.03, scale: 0.6, depth: 2 },
+    { key: 'tree', x: 0.45, y: 0.04, scale: 0.5, depth: 1 },
+    { key: 'tree', x: 0.65, y: 0.02, scale: 0.7, depth: 2 },
+    { key: 'tree', x: 0.85, y: 0.05, scale: 0.5, depth: 1 }
 ];
 
+// rock positions (more rocks)
 const rockPositions = [
-    { x: 0.25, y: 0.5 },
-    { x: 0.45, y: 0.4 },
+    { x: 0.15, y: 0.5 },
+    { x: 0.25, y: 0.6 },
+    { x: 0.35, y: 0.4 },
+    { x: 0.45, y: 0.3 },
+    { x: 0.55, y: 0.25 },
     { x: 0.65, y: 0.35 },
     { x: 0.75, y: 0.55 },
-    { x: 0.5, y: 0.25 }
+    { x: 0.85, y: 0.45 }
 ];
 
 // -------------------------
@@ -78,7 +90,9 @@ function create() {
 
     // Environment
     envObjects.forEach(obj => {
-        const sprite = this.add.image(w*obj.x, h*obj.y, obj.key).setScale(0.5).setDepth(1);
+        const depth = obj.depth || 1;
+        const scale = obj.scale || 0.5;
+        const sprite = this.add.image(w*obj.x, h*obj.y, obj.key).setScale(scale).setDepth(depth);
         envSprites.push(sprite);
     });
 
@@ -89,17 +103,11 @@ function create() {
     // Rocks
     rockPositions.forEach(pos => {
         const rock = this.physics.add.sprite(w*pos.x, h*pos.y, 'rock').setScale(0.5).setInteractive().setDepth(2);
-
-        // Assign a random insect to this rock
         rock.macro = Phaser.Utils.Array.GetRandom(macroinvertebrates);
-
         rocks.push(rock);
 
-        // Rock flip handler
         rock.on('pointerdown', () => {
             if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
-
-                // Remove rock visually
                 this.tweens.add({
                     targets: rock,
                     alpha: 0,
@@ -107,20 +115,18 @@ function create() {
                     onComplete: () => rock.destroy()
                 });
 
-                // Update score
                 score += 10;
                 scoreText.setText('Score: ' + score);
 
                 // Update Explorer panel ONLY
                 updateExplorer(rock.macro);
-
             } else {
                 console.log('Move closer to flip the rock!');
             }
         });
     });
 
-    // Resize handling
+    // Default Explorer image already handled in index.html
     window.addEventListener('resize', resizeGame);
 }
 
@@ -130,10 +136,8 @@ function create() {
 function update() {
     player.setVelocity(0);
     const speed = 200;
-
     if(cursors.left.isDown) player.setVelocityX(-speed);
     else if(cursors.right.isDown) player.setVelocityX(speed);
-
     if(cursors.up.isDown) player.setVelocityY(-speed);
     else if(cursors.down.isDown) player.setVelocityY(speed);
 }
