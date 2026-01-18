@@ -5,7 +5,7 @@ const config = {
     type: Phaser.AUTO,
     width: window.innerWidth,
     height: window.innerHeight,
-    backgroundColor: '#5DADE2', // light blue = stream/lake
+    backgroundColor: '#5DADE2',
     physics: { default: 'arcade', arcade: { debug: false } },
     scene: { preload, create, update },
     scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH }
@@ -21,6 +21,7 @@ let rocks = [];
 let envSprites = [];
 let score = 0, scoreText;
 let titleText, titleBg;
+let rockFlipSound; // sound for flipping rocks
 
 // -------------------------
 // Insects Data
@@ -71,6 +72,9 @@ function preload() {
     this.load.image('bush', 'bush.png');
 
     macroinvertebrates.forEach(critter => this.load.image(critter.key, critter.sprite));
+
+    // Load WAV sound
+    this.load.audio('rockFlip', 'rockFlip.wav');
 }
 
 // -------------------------
@@ -101,6 +105,7 @@ function create() {
     cursors = this.input.keyboard.createCursorKeys();
 
     // Rocks
+    rockFlipSound = this.sound.add('rockFlip', { volume: 0.5 }); // WAV sound
     rockPositions.forEach(pos => {
         const rock = this.physics.add.sprite(w*pos.x, h*pos.y, 'rock').setScale(0.5).setInteractive().setDepth(2);
         rock.macro = Phaser.Utils.Array.GetRandom(macroinvertebrates);
@@ -108,6 +113,9 @@ function create() {
 
         rock.on('pointerdown', () => {
             if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
+                // Play the WAV rock flip sound
+                rockFlipSound.play();
+
                 this.tweens.add({
                     targets: rock,
                     alpha: 0,
@@ -126,7 +134,7 @@ function create() {
         });
     });
 
-    // Default Explorer image already handled in index.html
+    // Handle window resize
     window.addEventListener('resize', resizeGame);
 }
 
