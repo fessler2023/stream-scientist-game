@@ -163,3 +163,4 @@ function updateExplorer(critter) {
     document.getElementById("explorerName").innerText = critter.name;
     document.getElementById("explorerText").innerText = critter.blurb;
 }
+
