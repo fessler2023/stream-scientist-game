@@ -73,6 +73,14 @@ function preload() {
 // Create the game world
 // --------------------------
 function create() {
+
+    for (let i = 0; i < 20; i++) {
+    this.add.image(16*i, 0, 'overworld', i).setScale(2).setOrigin(0);
+}
+for (let i = 0; i < 20; i++) {
+    this.add.image(16*i, 32, 'objects', i).setScale(2).setOrigin(0);
+}
+
     const solidObjects = this.physics.add.staticGroup();
     rocks = [];
 
@@ -174,4 +182,5 @@ function update() {
 window.addEventListener('resize', () => {
     game.scale.resize(window.innerWidth, window.innerHeight);
 });
+
 
