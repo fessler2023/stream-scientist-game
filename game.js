@@ -19,12 +19,28 @@ const game = new Phaser.Game(config);
 let player;
 let cursors;
 let rocks = [];
+let envSprites = [];
 let collectedSpecies = [];
 let score = 0;
 let scoreText;
+let inventorySprites = [];
+
+const envObjects = [
+    { key: 'tree', x: 0.1, y: 0.15 },
+    { key: 'bush', x: 0.85, y: 0.2 },
+    { key: 'tree', x: 0.35, y: 0.65 },
+    { key: 'bush', x: 0.75, y: 0.85 }
+];
+
+const rockPositions = [
+    { x: 0.25, y: 0.5 },
+    { x: 0.45, y: 0.4 },
+    { x: 0.65, y: 0.35 },
+    { x: 0.75, y: 0.55 },
+    { x: 0.5, y: 0.25 },
+];
 
 function preload() {
-    // Make sure the PNGs are in "assets" folder if you're using that folder
     this.load.image('player', 'player.png');
     this.load.image('rock', 'rock.png');
     this.load.image('species', 'bug.png');
@@ -33,28 +49,28 @@ function preload() {
 }
 
 function create() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
     // -------------------------
     // Environment objects
     // -------------------------
-    const envObjects = [
-        { key: 'tree', x: 0.1, y: 0.15 },
-        { key: 'bush', x: 0.85, y: 0.2 },
-        { key: 'tree', x: 0.35, y: 0.65 },
-        { key: 'bush', x: 0.75, y: 0.85 }
-    ];
-
     envObjects.forEach(obj => {
-        this.add.image(window.innerWidth * obj.x, window.innerHeight * obj.y, obj.key)
+        const sprite = this.add.image(w * obj.x, h * obj.y, obj.key)
             .setScale(0.5)
             .setOrigin(0.5, 0.5);
+        // Depth layering: trees/bushes behind player
+        sprite.setDepth(1);
+        envSprites.push(sprite);
     });
 
     // -------------------------
     // Player
     // -------------------------
-    player = this.physics.add.sprite(window.innerWidth / 2, window.innerHeight * 0.8, 'player')
+    player = this.physics.add.sprite(w / 2, h * 0.8, 'player')
         .setScale(0.5)
         .setCollideWorldBounds(true);
+    player.setDepth(2); // player appears above environment
 
     // -------------------------
     // Score display
@@ -64,20 +80,13 @@ function create() {
     cursors = this.input.keyboard.createCursorKeys();
 
     // -------------------------
-    // Rock positions
+    // Rocks
     // -------------------------
-    const rockPositions = [
-        { x: 0.25, y: 0.5 },
-        { x: 0.45, y: 0.4 },
-        { x: 0.65, y: 0.35 },
-        { x: 0.75, y: 0.55 },
-        { x: 0.5, y: 0.25 },
-    ];
-
     rockPositions.forEach((pos, index) => {
-        const rock = this.physics.add.sprite(window.innerWidth * pos.x, window.innerHeight * pos.y, 'rock')
+        const rock = this.physics.add.sprite(w * pos.x, h * pos.y, 'rock')
             .setScale(0.5)
             .setInteractive();
+        rock.setDepth(2); // rocks above environment, behind player if needed
         rocks.push(rock);
 
         rock.on('pointerdown', () => {
@@ -86,6 +95,12 @@ function create() {
                 collectedSpecies.push('species' + (index + 1));
                 score += 10;
                 scoreText.setText('Score: ' + score);
+
+                // Add species icon to inventory
+                const invX = 10 + inventorySprites.length * 40;
+                const invY = h - 50;
+                const invSprite = this.add.image(invX, invY, 'species').setScale(0.3).setScrollFactor(0);
+                inventorySprites.push(invSprite);
 
                 this.tweens.add({
                     targets: rock,
@@ -98,6 +113,11 @@ function create() {
             }
         });
     });
+
+    // -------------------------
+    // Resize listener
+    // -------------------------
+    window.addEventListener('resize', () => resizeGame(this));
 }
 
 function update() {
@@ -114,7 +134,28 @@ function update() {
 // -------------------------
 // Handle window resize
 // -------------------------
-window.addEventListener('resize', () => {
-    game.scale.resize(window.innerWidth, window.innerHeight);
-});
+function resizeGame(scene) {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    game.scale.resize(w, h);
+
+    // Reposition environment objects
+    envObjects.forEach((obj, i) => {
+        envSprites[i].setPosition(w * obj.x, h * obj.y);
+    });
+
+    // Reposition rocks
+    rockPositions.forEach((pos, i) => {
+        if (rocks[i] && rocks[i].active) rocks[i].setPosition(w * pos.x, h * pos.y);
+    });
+
+    // Reposition player proportionally
+    player.setPosition(w / 2, h * 0.8);
+
+    // Reposition inventory icons
+    inventorySprites.forEach((inv, i) => {
+        inv.setPosition(10 + i * 40, h - 50);
+    });
+}
 
