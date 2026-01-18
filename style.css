@@ -11,10 +11,10 @@ body {
     position: absolute;
     bottom: 10px;
     left: 10px;
-    width: 250px;            
-    height: 300px;           
+    width: 270px;           /* wider */
+    height: 340px;          /* taller */
     padding: 10px;
-    background: rgba(0,0,0,0.7); /* dark panel background */
+    background: rgba(0,0,0,0.7);
     border: 2px solid #fff;
     border-radius: 8px;
     box-sizing: border-box;
@@ -33,7 +33,7 @@ body {
     padding-bottom: 4px;
 }
 
-/* Insect Image Container (white background) */
+/* Insect Image */
 #explorer img {
     width: 140px;
     height: 140px;
@@ -41,7 +41,7 @@ body {
     image-rendering: pixelated;
     display: block;
     margin-bottom: 8px;
-    border: 1px solid #ccc;   /* optional subtle border */
+    border: 1px solid #ccc;
     border-radius: 4px;
 }
 
@@ -50,7 +50,7 @@ body {
     margin: 0 0 4px 0;
     font-size: 16px;
     text-align: center;
-    color: #fff;              /* stays white */
+    color: #fff;
 }
 
 /* Insect Blurb */
@@ -59,6 +59,6 @@ body {
     font-size: 14px;
     line-height: 1.2;
     text-align: center;
-    color: #fff;              /* stays white */
+    color: #fff;
 }
 
