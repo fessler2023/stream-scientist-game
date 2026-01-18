@@ -20,7 +20,7 @@ let player, cursors;
 let rocks = [], trash = [], envSprites = [];
 let score = 0, scoreText;
 let titleText, titleBg;
-let rockFlipSound, ambientSound;
+let rockFlipSound, ambientSound, trashSound;
 
 let clickedCount = 0;
 let totalItems = 0; // rocks + trash
@@ -64,9 +64,10 @@ function preload() {
     macroinvertebrates.forEach(critter => this.load.image(critter.key, critter.sprite));
     trashItems.forEach(t => this.load.image(t.key, t.sprite));
 
-    // WAV sounds
+    // WAV/MP3 sounds
     this.load.audio('rockFlip', 'rockFlip.wav');
-    this.load.audio('ambientWater', 'ambientWater.wav');
+    this.load.audio('ambientWater', 'ambientWater.wav'); // looping background
+    this.load.audio('trashSound', 'trash.wav'); // new trash sound
 }
 
 // -------------------------
@@ -107,6 +108,7 @@ function create() {
     rockFlipSound = this.sound.add('rockFlip', { volume: 0.5 });
     ambientSound = this.sound.add('ambientWater', { loop: true, volume: 0.3 });
     ambientSound.play();
+    trashSound = this.sound.add('trashSound', { volume: 0.5 }); // new sound
 
     // Rocks
     const rockCount = 12;
@@ -151,7 +153,7 @@ function create() {
 
         t.on('pointerdown', () => {
             if (Phaser.Math.Distance.Between(player.x, player.y, t.x, t.y) < 60) {
-                rockFlipSound.play();
+                trashSound.play(); // <-- play trash sound
                 t.destroy();
                 score += t.macro.points; // negative points
                 scoreText.setText('Score: ' + score);
@@ -211,7 +213,7 @@ function showLevelSummary() {
     const bugCounts = collectedBugs.reduce((acc, name) => { acc[name] = (acc[name]||0)+1; return acc; }, {});
     for (let bug in bugCounts) summary += `- ${bug} x${bugCounts[bug]}\n`;
     summary += `\nTrash Collected:\n`;
-    trashItems.forEach(t => summary += `- ${t.name} (if clicked: negative points)\n`);
-    alert(summary); // can replace with styled panel later
+    trashItems.forEach(t => summary += `- ${t.name} (negative points)\n`);
+    alert(summary); // can be replaced with styled panel later
 }
 
