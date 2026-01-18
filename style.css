@@ -1,0 +1,41 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+    font-family: Arial, sans-serif;
+    color: #fff;
+}
+
+/* Explorer Panel */
+#explorer {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    width: 200px;           /* panel width */
+    padding: 10px;
+    background: rgba(0,0,0,0.6);
+    border: 2px solid #fff;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+#explorer img {
+    width: 128px;           /* bigger image */
+    height: 128px;          /* bigger image */
+    image-rendering: pixelated; /* keep sprites crisp when scaled */
+    display: block;
+    margin-bottom: 8px;
+    border: 1px solid #fff;
+    border-radius: 4px;
+}
+
+#explorer h3 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+}
+
+#explorer p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.2;
+}
