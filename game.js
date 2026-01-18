@@ -1,84 +1,149 @@
+// --------------------------
+// Game constants
+// --------------------------
+const TILE_SIZE = 16;
+const SCALE = 2;
+let player;
+let cursors;
+let rocks = [];
+let score = 0;
+
+// --------------------------
+// Frame IDs for assets
+// --------------------------
+const GRASS = 1;
+const WATER = 5;
+const ROCK = 42;
+const BUSH = 38;
+const TREE = 70;
+const PLAYER_START_FRAME = 0;
+
+// --------------------------
+// Level 1 map layout
+// 0 = empty, 1 = grass, 2 = water
+// 3 = rocks, 4 = bush, 5 = tree
+// --------------------------
+const LEVEL_1 = [
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,1,1,1,1,1,1,1,1,0],
+    [0,1,2,2,1,1,3,3,1,0],
+    [0,1,2,2,1,1,3,3,1,0],
+    [0,1,1,1,1,1,1,1,1,0],
+    [0,1,4,1,1,5,1,4,1,0],
+    [0,1,1,1,1,1,1,1,1,0],
+    [0,0,0,0,0,0,0,0,0,0],
+];
+
+// --------------------------
+// Phaser configuration
+// --------------------------
 const config = {
     type: Phaser.AUTO,
     width: window.innerWidth,
     height: window.innerHeight,
-    backgroundColor: '#5DADE2', // light blue = stream/lake
+    backgroundColor: '#5DADE2',
     physics: {
         default: 'arcade',
-        arcade: {
-            debug: false
-        }
+        arcade: { debug: false }
     },
-    scene: {
-        preload,
-        create,
-        update
-    },
+    scene: { preload, create, update },
     scale: {
-        mode: Phaser.Scale.RESIZE,        // canvas resizes with browser
+        mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH
     }
 };
 
+// --------------------------
+// Create the Phaser game
+// --------------------------
 const game = new Phaser.Game(config);
 
-let player;
-let cursors;
-let rocks = [];
-let collectedSpecies = [];
-let score = 0;
-let scoreText;
-
+// --------------------------
+// Preload assets
+// --------------------------
 function preload() {
-    this.load.image('player', 'player.png'); 
-    this.load.image('rock', 'rock.png');     
-    this.load.image('species', 'bug.png');   
-    this.load.image('tree', 'tree.png');     
-    this.load.image('bush', 'bush.png');     
+    this.load.spritesheet('overworld', 'assets/Overworld.png', { frameWidth: 16, frameHeight: 16 });
+    this.load.spritesheet('objects', 'assets/objects.png', { frameWidth: 16, frameHeight: 16 });
+    this.load.spritesheet('player', 'assets/character.png', { frameWidth: 16, frameHeight: 16 });
 }
 
+// --------------------------
+// Create the game world
+// --------------------------
 function create() {
-    // Environment objects - positions now relative to screen size
-    this.add.image(window.innerWidth * 0.1, window.innerHeight * 0.15, 'tree').setScale(0.5);
-    this.add.image(window.innerWidth * 0.85, window.innerHeight * 0.2, 'bush').setScale(0.5);
-    this.add.image(window.innerWidth * 0.35, window.innerHeight * 0.65, 'tree').setScale(0.5);
-    this.add.image(window.innerWidth * 0.75, window.innerHeight * 0.85, 'bush').setScale(0.5);
+    const solidObjects = this.physics.add.staticGroup();
+    rocks = [];
 
-    // Player starts near bottom center
-    player = this.physics.add.sprite(window.innerWidth/2, window.innerHeight * 0.8, 'player').setScale(0.5);
+    // Build the world
+    LEVEL_1.forEach((row, y) => {
+        row.forEach((tile, x) => {
+            const worldX = x * TILE_SIZE * SCALE;
+            const worldY = y * TILE_SIZE * SCALE;
+
+            if (tile === 1) {
+                this.add.image(worldX, worldY, 'overworld', GRASS)
+                    .setOrigin(0)
+                    .setScale(SCALE);
+            }
+
+            if (tile === 2) {
+                this.add.image(worldX, worldY, 'overworld', WATER)
+                    .setOrigin(0)
+                    .setScale(SCALE);
+            }
+
+            if (tile === 3) {
+                const rock = this.physics.add.sprite(
+                    worldX + TILE_SIZE,
+                    worldY + TILE_SIZE,
+                    'objects',
+                    ROCK
+                ).setScale(SCALE).setInteractive();
+
+                rocks.push(rock);
+            }
+
+            if (tile === 4) {
+                solidObjects.create(
+                    worldX + TILE_SIZE,
+                    worldY + TILE_SIZE,
+                    'objects',
+                    BUSH
+                ).setScale(SCALE);
+            }
+
+            if (tile === 5) {
+                solidObjects.create(
+                    worldX + TILE_SIZE,
+                    worldY + TILE_SIZE,
+                    'objects',
+                    TREE
+                ).setScale(SCALE);
+            }
+        });
+    });
+
+    // Player
+    player = this.physics.add.sprite(
+        5 * TILE_SIZE * SCALE,
+        6 * TILE_SIZE * SCALE,
+        'player',
+        PLAYER_START_FRAME
+    ).setScale(SCALE);
+
     player.setCollideWorldBounds(true);
 
-    // Score display
-    scoreText = this.add.text(10, 10, 'Score: 0', { font: '20px Arial', fill: '#fff' });
+    this.physics.add.collider(player, solidObjects);
 
     cursors = this.input.keyboard.createCursorKeys();
 
-    // Rock positions along “stream” - scaled to screen
-    const rockPositions = [
-        {x: window.innerWidth * 0.25, y: window.innerHeight * 0.5},
-        {x: window.innerWidth * 0.45, y: window.innerHeight * 0.4},
-        {x: window.innerWidth * 0.65, y: window.innerHeight * 0.35},
-        {x: window.innerWidth * 0.75, y: window.innerHeight * 0.55},
-        {x: window.innerWidth * 0.5,  y: window.innerHeight * 0.25},
-    ];
-
-    rockPositions.forEach((pos, index) => {
-        const rock = this.physics.add.sprite(pos.x, pos.y, 'rock').setScale(0.5).setInteractive();
-        rocks.push(rock);
-
+    // Rock interaction
+    rocks.forEach((rock, index) => {
         rock.on('pointerdown', () => {
-            if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
-                const species = this.add.sprite(rock.x, rock.y, 'species').setScale(0.3);
-                collectedSpecies.push('species'+(index+1));
+            if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 40) {
                 score += 10;
-                scoreText.setText('Score: ' + score);
-
-                this.tweens.add({
-                    targets: rock,
-                    alpha: 0,
-                    duration: 300,
-                    onComplete: () => rock.destroy()
-                });
+                console.log('Macroinvertebrate found under rock!');
+                rock.destroy();
             } else {
                 console.log('Move closer to flip the rock!');
             }
@@ -86,9 +151,12 @@ function create() {
     });
 }
 
+// --------------------------
+// Game update loop
+// --------------------------
 function update() {
     player.setVelocity(0);
-    const speed = 200;
+    const speed = 120;
 
     if (cursors.left.isDown) player.setVelocityX(-speed);
     else if (cursors.right.isDown) player.setVelocityX(speed);
@@ -97,7 +165,9 @@ function update() {
     else if (cursors.down.isDown) player.setVelocityY(speed);
 }
 
-// Optional: handle window resize dynamically
+// --------------------------
+// Handle window resize
+// --------------------------
 window.addEventListener('resize', () => {
     game.scale.resize(window.innerWidth, window.innerHeight);
 });
