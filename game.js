@@ -16,13 +16,17 @@ const config = {
 
 const game = new Phaser.Game(config);
 
+// -------------------------
+// Globals
+// -------------------------
 let player;
 let cursors;
 let rocks = [];
 let envSprites = [];
-let collectedSpecies = [];
 let score = 0;
 let scoreText;
+let titleText;
+let titleBg;
 
 // -------------------------
 // Macroinvertebrate Data
@@ -32,25 +36,24 @@ const macroinvertebrates = [
         key: 'caddisfly',
         sprite: 'caddisfly.png',
         name: 'Caddisfly Larva',
-        blurb: 'Caddisfly larvae build protective cases from sand or twigs and indicate clean water.'
+        blurb: 'Caddisfly larvae often build protective cases and indicate clean water.'
     },
     {
         key: 'hellgrammite',
         sprite: 'hellgrammite.png',
-        name: 'Dobsonfly Larva (Hellgrammite)',
-        blurb: 'Hellgrammites are predatory larvae found under rocks in fast streams.'
+        name: 'Hellgrammite',
+        blurb: 'Hellgrammites are fierce predators found in fast-moving, oxygen-rich streams.'
     },
     {
         key: 'mayfly',
         sprite: 'mayfly.png',
         name: 'Mayfly Nymph',
-        blurb: 'Mayfly nymphs are classic indicators of high water quality.'
+        blurb: 'Mayfly nymphs are sensitive to pollution and signal excellent water quality.'
     }
-    // Add more critters here by adding new objects
 ];
 
 // -------------------------
-// Environment
+// Environment Layout
 // -------------------------
 const envObjects = [
     { key: 'tree', x: 0.1, y: 0.15 },
@@ -64,33 +67,59 @@ const rockPositions = [
     { x: 0.45, y: 0.4 },
     { x: 0.65, y: 0.35 },
     { x: 0.75, y: 0.55 },
-    { x: 0.5, y: 0.25 },
+    { x: 0.5, y: 0.25 }
 ];
 
+// -------------------------
+// Preload
+// -------------------------
 function preload() {
     this.load.image('player', 'player.png');
     this.load.image('rock', 'rock.png');
     this.load.image('tree', 'tree.png');
     this.load.image('bush', 'bush.png');
 
-    // Load all macroinvertebrates dynamically
     macroinvertebrates.forEach(critter => {
         this.load.image(critter.key, critter.sprite);
     });
 }
 
+// -------------------------
+// Create
+// -------------------------
 function create() {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+    const w = this.scale.width;
+    const h = this.scale.height;
 
     // -------------------------
-    // Environment objects
+    // Title Bar
+    // -------------------------
+    titleBg = this.add.rectangle(w / 2, 0, w, 40, 0x000000, 0.4)
+        .setOrigin(0.5, 0)
+        .setDepth(10);
+
+    titleText = this.add.text(
+        w / 2,
+        8,
+        'The Adventures of Little Doug',
+        { font: '22px Arial', fill: '#ffffff', fontStyle: 'bold' }
+    ).setOrigin(0.5, 0).setDepth(11);
+
+    // -------------------------
+    // Score
+    // -------------------------
+    scoreText = this.add.text(10, 50, 'Score: 0', {
+        font: '18px Arial',
+        fill: '#ffffff'
+    }).setDepth(11);
+
+    // -------------------------
+    // Environment
     // -------------------------
     envObjects.forEach(obj => {
         const sprite = this.add.image(w * obj.x, h * obj.y, obj.key)
             .setScale(0.5)
-            .setOrigin(0.5, 0.5);
-        sprite.setDepth(1);
+            .setDepth(1);
         envSprites.push(sprite);
     });
 
@@ -99,41 +128,31 @@ function create() {
     // -------------------------
     player = this.physics.add.sprite(w / 2, h * 0.8, 'player')
         .setScale(0.5)
-        .setCollideWorldBounds(true);
-    player.setDepth(2);
-
-    // -------------------------
-    // Score display
-    // -------------------------
-    scoreText = this.add.text(10, 10, 'Score: 0', { font: '20px Arial', fill: '#fff' });
+        .setCollideWorldBounds(true)
+        .setDepth(2);
 
     cursors = this.input.keyboard.createCursorKeys();
 
     // -------------------------
     // Rocks
     // -------------------------
-    rockPositions.forEach((pos, index) => {
+    rockPositions.forEach(pos => {
         const rock = this.physics.add.sprite(w * pos.x, h * pos.y, 'rock')
             .setScale(0.5)
-            .setInteractive();
-        rock.setDepth(2);
+            .setInteractive()
+            .setDepth(2);
 
-        // Assign a random macroinvertebrate to this rock
         rock.macro = Phaser.Utils.Array.GetRandom(macroinvertebrates);
         rocks.push(rock);
 
         rock.on('pointerdown', () => {
             if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
-                // Display macro sprite
+
                 const critter = this.add.sprite(rock.x, rock.y, rock.macro.key);
-
-                // Automatically scale to uniform size
-                const targetWidth = 64; // visual width in pixels
+                const targetWidth = 64;
                 const scale = targetWidth / critter.width;
-                critter.setScale(scale);
-                critter.setDepth(3);
+                critter.setScale(scale).setDepth(3);
 
-                // Optional pop animation
                 this.tweens.add({
                     targets: critter,
                     scale: { from: 0, to: scale },
@@ -141,37 +160,40 @@ function create() {
                     ease: 'Back.Out'
                 });
 
-                // Update score and collected species
-                collectedSpecies.push(rock.macro.name);
                 score += 10;
                 scoreText.setText('Score: ' + score);
 
-                // Show educational blurb near critter
-                const foundText = this.add.text(rock.x, rock.y - 50,
+                const infoText = this.add.text(
+                    rock.x,
+                    rock.y - 50,
                     `You found a ${rock.macro.name}!\n${rock.macro.blurb}`,
-                    { font: '16px Arial', fill: '#fff', backgroundColor: '#000000AA', padding: 5, wordWrap: { width: 200 } })
-                    .setOrigin(0.5);
-                foundText.setDepth(4);
+                    {
+                        font: '15px Arial',
+                        fill: '#ffffff',
+                        backgroundColor: '#000000AA',
+                        padding: 6,
+                        wordWrap: { width: 220 }
+                    }
+                ).setOrigin(0.5).setDepth(4);
 
-                this.time.delayedCall(4000, () => foundText.destroy());
+                this.time.delayedCall(4000, () => infoText.destroy());
 
-                // Remove rock with fade
                 this.tweens.add({
                     targets: rock,
                     alpha: 0,
                     duration: 300,
                     onComplete: () => rock.destroy()
                 });
-
-            } else {
-                console.log('Move closer to flip the rock!');
             }
         });
     });
 
-    window.addEventListener('resize', () => resizeGame());
+    window.addEventListener('resize', resizeGame);
 }
 
+// -------------------------
+// Update
+// -------------------------
 function update() {
     player.setVelocity(0);
     const speed = 200;
@@ -184,7 +206,7 @@ function update() {
 }
 
 // -------------------------
-// Handle window resize
+// Resize Handler
 // -------------------------
 function resizeGame() {
     const w = window.innerWidth;
@@ -192,19 +214,19 @@ function resizeGame() {
 
     game.scale.resize(w, h);
 
-    // Reposition environment objects
+    titleBg.setSize(w, 40);
+    titleBg.setPosition(w / 2, 0);
+    titleText.setPosition(w / 2, 8);
+
     envObjects.forEach((obj, i) => {
         envSprites[i].setPosition(w * obj.x, h * obj.y);
     });
 
-    // Reposition rocks
     rockPositions.forEach((pos, i) => {
-        if (rocks[i] && rocks[i].active) rocks[i].setPosition(w * pos.x, h * pos.y);
+        if (rocks[i] && rocks[i].active) {
+            rocks[i].setPosition(w * pos.x, h * pos.y);
+        }
     });
 
-    // Reposition player
     player.setPosition(w / 2, h * 0.8);
 }
-
-
-
