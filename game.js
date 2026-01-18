@@ -25,11 +25,11 @@ let scoreText;
 
 function preload() {
     // Make sure the PNGs are in "assets" folder if you're using that folder
-    this.load.image('player', 'assets/player.png');
-    this.load.image('rock', 'assets/rock.png');
-    this.load.image('species', 'assets/bug.png');
-    this.load.image('tree', 'assets/tree.png');
-    this.load.image('bush', 'assets/bush.png');
+    this.load.image('player', 'player.png');
+    this.load.image('rock', 'rock.png');
+    this.load.image('species', 'bug.png');
+    this.load.image('tree', 'tree.png');
+    this.load.image('bush', 'bush.png');
 }
 
 function create() {
@@ -117,3 +117,4 @@ function update() {
 window.addEventListener('resize', () => {
     game.scale.resize(window.innerWidth, window.innerHeight);
 });
+
