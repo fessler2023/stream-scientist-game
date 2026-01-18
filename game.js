@@ -46,6 +46,7 @@ const macroinvertebrates = [
         name: 'Mayfly Nymph',
         blurb: 'Mayfly nymphs are classic indicators of high water quality.'
     }
+    // Add more critters here by adding new objects
 ];
 
 // -------------------------
@@ -69,11 +70,13 @@ const rockPositions = [
 function preload() {
     this.load.image('player', 'player.png');
     this.load.image('rock', 'rock.png');
-    this.load.image('caddisfly', 'caddisfly.png');
-    this.load.image('hellgrammite', 'hellgrammite.png');
-    this.load.image('mayfly', 'mayfly.png');
     this.load.image('tree', 'tree.png');
     this.load.image('bush', 'bush.png');
+
+    // Load all macroinvertebrates dynamically
+    macroinvertebrates.forEach(critter => {
+        this.load.image(critter.key, critter.sprite);
+    });
 }
 
 function create() {
@@ -115,31 +118,42 @@ function create() {
             .setInteractive();
         rock.setDepth(2);
 
-        // Assign random macroinvertebrate to this rock
+        // Assign a random macroinvertebrate to this rock
         rock.macro = Phaser.Utils.Array.GetRandom(macroinvertebrates);
         rocks.push(rock);
 
         rock.on('pointerdown', () => {
             if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
-                // Display macro sprite at rock
-                const critter = this.add.sprite(rock.x, rock.y, rock.macro.key).setScale(0.3);
+                // Display macro sprite
+                const critter = this.add.sprite(rock.x, rock.y, rock.macro.key);
+
+                // Automatically scale to uniform size
+                const targetWidth = 64; // visual width in pixels
+                const scale = targetWidth / critter.width;
+                critter.setScale(scale);
                 critter.setDepth(3);
 
-                // Update score
+                // Optional pop animation
+                this.tweens.add({
+                    targets: critter,
+                    scale: { from: 0, to: scale },
+                    duration: 300,
+                    ease: 'Back.Out'
+                });
+
+                // Update score and collected species
                 collectedSpecies.push(rock.macro.name);
                 score += 10;
                 scoreText.setText('Score: ' + score);
 
-                // Show popup with name & blurb
-                const foundText = this.add.text(player.x, player.y - 50,
+                // Show educational blurb near critter
+                const foundText = this.add.text(rock.x, rock.y - 50,
                     `You found a ${rock.macro.name}!\n${rock.macro.blurb}`,
-                    { font: '16px Arial', fill: '#fff', backgroundColor: '#000000AA', padding: 5 })
+                    { font: '16px Arial', fill: '#fff', backgroundColor: '#000000AA', padding: 5, wordWrap: { width: 200 } })
                     .setOrigin(0.5);
                 foundText.setDepth(4);
 
-                this.time.delayedCall(4000, () => {
-                    foundText.destroy();
-                });
+                this.time.delayedCall(4000, () => foundText.destroy());
 
                 // Remove rock with fade
                 this.tweens.add({
@@ -191,4 +205,6 @@ function resizeGame() {
     // Reposition player
     player.setPosition(w / 2, h * 0.8);
 }
+
+
 
