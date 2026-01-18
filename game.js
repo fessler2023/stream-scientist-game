@@ -2,7 +2,7 @@ const config = {
     type: Phaser.AUTO,
     width: window.innerWidth,
     height: window.innerHeight,
-    backgroundColor: '#5DADE2', // light blue = stream/lake
+    backgroundColor: '#5DADE2',
     physics: {
         default: 'arcade',
         arcade: { debug: false }
@@ -23,8 +23,34 @@ let envSprites = [];
 let collectedSpecies = [];
 let score = 0;
 let scoreText;
-let inventorySprites = [];
 
+// -------------------------
+// Macroinvertebrate Data
+// -------------------------
+const macroinvertebrates = [
+    {
+        key: 'caddisfly',
+        sprite: 'caddisfly.png',
+        name: 'Caddisfly Larva',
+        blurb: 'Caddisfly larvae build protective cases from sand or twigs and indicate clean water.'
+    },
+    {
+        key: 'hellgrammite',
+        sprite: 'hellgrammite.png',
+        name: 'Dobsonfly Larva (Hellgrammite)',
+        blurb: 'Hellgrammites are predatory larvae found under rocks in fast streams.'
+    },
+    {
+        key: 'mayfly',
+        sprite: 'mayfly.png',
+        name: 'Mayfly Nymph',
+        blurb: 'Mayfly nymphs are classic indicators of high water quality.'
+    }
+];
+
+// -------------------------
+// Environment
+// -------------------------
 const envObjects = [
     { key: 'tree', x: 0.1, y: 0.15 },
     { key: 'bush', x: 0.85, y: 0.2 },
@@ -43,7 +69,9 @@ const rockPositions = [
 function preload() {
     this.load.image('player', 'player.png');
     this.load.image('rock', 'rock.png');
-    this.load.image('species', 'bug.png');
+    this.load.image('caddisfly', 'caddisfly.png');
+    this.load.image('hellgrammite', 'hellgrammite.png');
+    this.load.image('mayfly', 'mayfly.png');
     this.load.image('tree', 'tree.png');
     this.load.image('bush', 'bush.png');
 }
@@ -59,7 +87,6 @@ function create() {
         const sprite = this.add.image(w * obj.x, h * obj.y, obj.key)
             .setScale(0.5)
             .setOrigin(0.5, 0.5);
-        // Depth layering: trees/bushes behind player
         sprite.setDepth(1);
         envSprites.push(sprite);
     });
@@ -70,7 +97,7 @@ function create() {
     player = this.physics.add.sprite(w / 2, h * 0.8, 'player')
         .setScale(0.5)
         .setCollideWorldBounds(true);
-    player.setDepth(2); // player appears above environment
+    player.setDepth(2);
 
     // -------------------------
     // Score display
@@ -86,38 +113,49 @@ function create() {
         const rock = this.physics.add.sprite(w * pos.x, h * pos.y, 'rock')
             .setScale(0.5)
             .setInteractive();
-        rock.setDepth(2); // rocks above environment, behind player if needed
+        rock.setDepth(2);
+
+        // Assign random macroinvertebrate to this rock
+        rock.macro = Phaser.Utils.Array.GetRandom(macroinvertebrates);
         rocks.push(rock);
 
         rock.on('pointerdown', () => {
             if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
-                const species = this.add.sprite(rock.x, rock.y, 'species').setScale(0.3);
-                collectedSpecies.push('species' + (index + 1));
+                // Display macro sprite at rock
+                const critter = this.add.sprite(rock.x, rock.y, rock.macro.key).setScale(0.3);
+                critter.setDepth(3);
+
+                // Update score
+                collectedSpecies.push(rock.macro.name);
                 score += 10;
                 scoreText.setText('Score: ' + score);
 
-                // Add species icon to inventory
-                const invX = 10 + inventorySprites.length * 40;
-                const invY = h - 50;
-                const invSprite = this.add.image(invX, invY, 'species').setScale(0.3).setScrollFactor(0);
-                inventorySprites.push(invSprite);
+                // Show popup with name & blurb
+                const foundText = this.add.text(player.x, player.y - 50,
+                    `You found a ${rock.macro.name}!\n${rock.macro.blurb}`,
+                    { font: '16px Arial', fill: '#fff', backgroundColor: '#000000AA', padding: 5 })
+                    .setOrigin(0.5);
+                foundText.setDepth(4);
 
+                this.time.delayedCall(4000, () => {
+                    foundText.destroy();
+                });
+
+                // Remove rock with fade
                 this.tweens.add({
                     targets: rock,
                     alpha: 0,
                     duration: 300,
                     onComplete: () => rock.destroy()
                 });
+
             } else {
                 console.log('Move closer to flip the rock!');
             }
         });
     });
 
-    // -------------------------
-    // Resize listener
-    // -------------------------
-    window.addEventListener('resize', () => resizeGame(this));
+    window.addEventListener('resize', () => resizeGame());
 }
 
 function update() {
@@ -134,7 +172,7 @@ function update() {
 // -------------------------
 // Handle window resize
 // -------------------------
-function resizeGame(scene) {
+function resizeGame() {
     const w = window.innerWidth;
     const h = window.innerHeight;
 
@@ -150,12 +188,7 @@ function resizeGame(scene) {
         if (rocks[i] && rocks[i].active) rocks[i].setPosition(w * pos.x, h * pos.y);
     });
 
-    // Reposition player proportionally
+    // Reposition player
     player.setPosition(w / 2, h * 0.8);
-
-    // Reposition inventory icons
-    inventorySprites.forEach((inv, i) => {
-        inv.setPosition(10 + i * 40, h - 50);
-    });
 }
 
