@@ -17,11 +17,14 @@ const game = new Phaser.Game(config);
 // Globals
 // -------------------------
 let player, cursors;
-let rocks = [];
-let envSprites = [];
+let rocks = [], trash = [], envSprites = [];
 let score = 0, scoreText;
 let titleText, titleBg;
 let rockFlipSound, ambientSound;
+
+let clickedCount = 0;
+let totalItems = 0; // rocks + trash
+let collectedBugs = [];
 
 // -------------------------
 // Insects Data
@@ -33,7 +36,15 @@ const macroinvertebrates = [
 ];
 
 // -------------------------
-// Environment Data (bushes only, trees will be random top border)
+// Trash Data
+// -------------------------
+const trashItems = [
+    { key: 'plastic', sprite: 'plastic.png', name: 'Plastic Bottle', blurb: 'Plastic trash harms aquatic life and pollutes streams.', points: -5 },
+    { key: 'can', sprite: 'can.png', name: 'Aluminum Can', blurb: 'Cans can leach chemicals into the water.', points: -5 }
+];
+
+// -------------------------
+// Environment Data (bushes only)
 // -------------------------
 const bushes = [
     { key: 'bush', x: 0.85, y: 0.2, scale: 0.3 },
@@ -51,10 +62,11 @@ function preload() {
     this.load.image('tree', 'tree.png');
     bushes.forEach(b => this.load.image(b.key, b.key + '.png'));
     macroinvertebrates.forEach(critter => this.load.image(critter.key, critter.sprite));
+    trashItems.forEach(t => this.load.image(t.key, t.sprite));
 
-    // Load WAV sounds
+    // WAV sounds
     this.load.audio('rockFlip', 'rockFlip.wav');
-    this.load.audio('ambientWater', 'ambientWater.wav'); // your 43-second ambient
+    this.load.audio('ambientWater', 'ambientWater.wav');
 }
 
 // -------------------------
@@ -94,10 +106,12 @@ function create() {
     // Sounds
     rockFlipSound = this.sound.add('rockFlip', { volume: 0.5 });
     ambientSound = this.sound.add('ambientWater', { loop: true, volume: 0.3 });
-    ambientSound.play(); // start looping background sound
+    ambientSound.play();
 
     // Rocks
     const rockCount = 12;
+    totalItems = rockCount + trashItems.length;
+
     for (let i = 0; i < rockCount; i++) {
         const randX = Phaser.Math.FloatBetween(0.1, 0.9);
         const randY = Phaser.Math.FloatBetween(0.3, 0.8);
@@ -106,29 +120,48 @@ function create() {
             .setInteractive()
             .setDepth(2);
 
-        // assign random bug
         rock.macro = Phaser.Utils.Array.GetRandom(macroinvertebrates);
         rocks.push(rock);
 
         rock.on('pointerdown', () => {
             if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
                 rockFlipSound.play();
-                this.tweens.add({
-                    targets: rock,
-                    alpha: 0,
-                    duration: 300,
-                    onComplete: () => rock.destroy()
-                });
+                rock.destroy();
                 score += 10;
                 scoreText.setText('Score: ' + score);
+                collectedBugs.push(rock.macro.name);
                 updateExplorer(rock.macro);
-            } else {
-                console.log('Move closer to flip the rock!');
-            }
+                clickedCount++;
+                if (clickedCount >= totalItems) showLevelSummary();
+            } else console.log('Move closer to flip the rock!');
         });
     }
 
-    // Handle window resize
+    // Trash
+    trashItems.forEach(item => {
+        const randX = Phaser.Math.FloatBetween(0.1, 0.9);
+        const randY = Phaser.Math.FloatBetween(0.3, 0.8);
+        const t = this.physics.add.sprite(w * randX, h * randY, item.key)
+            .setScale(0.3)
+            .setInteractive()
+            .setDepth(2);
+
+        t.macro = item;
+        trash.push(t);
+
+        t.on('pointerdown', () => {
+            if (Phaser.Math.Distance.Between(player.x, player.y, t.x, t.y) < 60) {
+                rockFlipSound.play();
+                t.destroy();
+                score += t.macro.points; // negative points
+                scoreText.setText('Score: ' + score);
+                updateExplorer(t.macro);
+                clickedCount++;
+                if (clickedCount >= totalItems) showLevelSummary();
+            } else console.log('Move closer to flip the trash!');
+        });
+    });
+
     window.addEventListener('resize', resizeGame);
 }
 
@@ -157,7 +190,7 @@ function resizeGame() {
     titleText.setPosition(w/2,8);
 
     bushes.forEach((b,i)=> envSprites[i].setPosition(w*b.x, h*b.y));
-    rocks.forEach(r => { if(r.active) r.setPosition(r.x/w * w, r.y/h * h); });
+    rocks.concat(trash).forEach(r => { if(r.active) r.setPosition(r.x/w * w, r.y/h * h); });
     player.setPosition(w/2,h*0.8);
 }
 
@@ -168,5 +201,17 @@ function updateExplorer(critter) {
     document.getElementById("explorerImage").src = critter.sprite;
     document.getElementById("explorerName").innerText = critter.name;
     document.getElementById("explorerText").innerText = critter.blurb;
+}
+
+// -------------------------
+// Level Summary
+// -------------------------
+function showLevelSummary() {
+    let summary = `Level Complete!\nScore: ${score}\n\nBugs Collected:\n`;
+    const bugCounts = collectedBugs.reduce((acc, name) => { acc[name] = (acc[name]||0)+1; return acc; }, {});
+    for (let bug in bugCounts) summary += `- ${bug} x${bugCounts[bug]}\n`;
+    summary += `\nTrash Collected:\n`;
+    trashItems.forEach(t => summary += `- ${t.name} (if clicked: negative points)\n`);
+    alert(summary); // can replace with styled panel later
 }
 
