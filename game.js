@@ -2,7 +2,7 @@ const config = {
     type: Phaser.AUTO,
     width: window.innerWidth,
     height: window.innerHeight,
-    backgroundColor: '#5DADE2', // stream/lake
+    backgroundColor: '#5DADE2', // light blue = stream/lake
     physics: {
         default: 'arcade',
         arcade: { debug: false }
@@ -27,7 +27,6 @@ let macroinvertebrates = [];
 let trashItems = [];
 let clickedCount = 0;
 let totalItems = 12; // rocks per level
-let touchButtons = {};
 
 function preload() {
     this.load.image('player', 'player.png');
@@ -38,17 +37,17 @@ function preload() {
     this.load.audio('rockFlip', 'rockFlip.wav');
     this.load.audio('trashSound', 'trash.wav');
 
-    // Macroinvertebrates
+    // Load your macroinvertebrate PNGs
     this.load.image('caddisfly', 'caddisfly.png');
     this.load.image('hellgrammite', 'hellgrammite.png');
 
-    // Trash
+    // Load trash PNGs
     this.load.image('plastic', 'plastic.png');
     this.load.image('can', 'can.png');
 }
 
 function create() {
-    // Environment
+    // Environment objects
     const envObjects = [
         { key: 'tree', x: 0.1, y: 0.15 },
         { key: 'bush', x: 0.85, y: 0.2 },
@@ -67,7 +66,7 @@ function create() {
         .setScale(0.5)
         .setCollideWorldBounds(true);
 
-    // Score
+    // Score display
     scoreText = this.add.text(10, 10, 'Score: 0', { font: '20px Arial', fill: '#fff' });
 
     cursors = this.input.keyboard.createCursorKeys();
@@ -88,17 +87,14 @@ function create() {
         { name: 'Tin Can', sprite: 'can', blurb: 'Cans are pollution and can injure animals.', points: -5 }
     ];
 
-    // Rocks
+    // Create rocks
     createRocks(this);
 
-    // Explorer panel
+    // Create Explorer panel
     createExplorerPanel();
 
-    // Touch controls
+    // Create on-screen touch controls
     createTouchControls(this);
-
-    // Adjust UI for small screens
-    adjustForSmallScreens(this);
 }
 
 function createRocks(scene) {
@@ -115,6 +111,7 @@ function createRocks(scene) {
 
         rock.on('pointerdown', () => {
             if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
+                // Randomly decide if trash or bug
                 let isTrash = Phaser.Math.Between(1, 100) <= 20; // 20% trash
                 let content;
                 if (isTrash) {
@@ -140,6 +137,7 @@ function createRocks(scene) {
 }
 
 function createExplorerPanel() {
+    // HTML overlay
     const container = document.createElement('div');
     container.id = 'explorer';
     container.innerHTML = `
@@ -149,6 +147,7 @@ function createExplorerPanel() {
     `;
     document.body.appendChild(container);
 
+    // Style
     const style = document.createElement('style');
     style.innerHTML = `
         #explorer {
@@ -192,58 +191,36 @@ function createTouchControls(scene) {
     const btnSize = 80;
     const alpha = 0.3;
 
-    touchButtons.left = scene.add.rectangle(50, h-100, btnSize, btnSize, 0x000000, alpha)
+    // Left
+    scene.add.rectangle(50, h-100, btnSize, btnSize, 0x000000, alpha)
         .setInteractive()
         .on('pointerdown', () => player.setVelocityX(-200))
         .on('pointerup', () => player.setVelocityX(0));
 
-    touchButtons.right = scene.add.rectangle(150, h-100, btnSize, btnSize, 0x000000, alpha)
+    // Right
+    scene.add.rectangle(150, h-100, btnSize, btnSize, 0x000000, alpha)
         .setInteractive()
         .on('pointerdown', () => player.setVelocityX(200))
         .on('pointerup', () => player.setVelocityX(0));
 
-    touchButtons.up = scene.add.rectangle(w-100, h-150, btnSize, btnSize, 0x000000, alpha)
+    // Up
+    scene.add.rectangle(w-100, h-150, btnSize, btnSize, 0x000000, alpha)
         .setInteractive()
         .on('pointerdown', () => player.setVelocityY(-200))
         .on('pointerup', () => player.setVelocityY(0));
 
-    touchButtons.down = scene.add.rectangle(w-100, h-50, btnSize, btnSize, 0x000000, alpha)
+    // Down
+    scene.add.rectangle(w-100, h-50, btnSize, btnSize, 0x000000, alpha)
         .setInteractive()
         .on('pointerdown', () => player.setVelocityY(200))
         .on('pointerup', () => player.setVelocityY(0));
-}
-
-function adjustForSmallScreens(scene) {
-    const w = scene.scale.width;
-    const h = scene.scale.height;
-
-    // Explorer panel adjustments
-    const explorer = document.getElementById('explorer');
-    if(w < 500){
-        explorer.style.width = '180px';
-        explorer.querySelector('img').style.width = '100px';
-        explorer.querySelector('img').style.height = '100px';
-        explorer.querySelector('p').style.fontSize = '12px';
-    }
-
-    // Touch button positions
-    if(touchButtons.left) {
-        touchButtons.left.setPosition(40, h-80);
-        touchButtons.right.setPosition(120, h-80);
-        touchButtons.up.setPosition(w-80, h-120);
-        touchButtons.down.setPosition(w-80, h-40);
-    }
-
-    // Player scale for small screens
-    if(w < 400) player.setScale(0.35);
-    else player.setScale(0.5);
 }
 
 function update() {
     player.setVelocity(0);
     const speed = 200;
 
-    // Keyboard controls (desktop)
+    // Desktop controls
     if (cursors.left.isDown) player.setVelocityX(-speed);
     else if (cursors.right.isDown) player.setVelocityX(speed);
     if (cursors.up.isDown) player.setVelocityY(-speed);
@@ -253,6 +230,5 @@ function update() {
 // Handle window resize
 window.addEventListener('resize', () => {
     game.scale.resize(window.innerWidth, window.innerHeight);
-    adjustForSmallScreens(game.scene.scenes[0]);
 });
 
