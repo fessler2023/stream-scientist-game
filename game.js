@@ -9,34 +9,6 @@ let rocks = [];
 let score = 0;
 
 // --------------------------
-// Frame IDs for assets
-// --------------------------
-const GRASS = 0;
-const WATER = 1;
-
-const ROCK = 42;
-const BUSH = 38;
-const TREE = 70;
-
-const PLAYER_START_FRAME = 0;
-
-// --------------------------
-// Level 1 map layout
-// 0 = empty, 1 = grass, 2 = water
-// 3 = rocks, 4 = bush, 5 = tree
-// --------------------------
-const LEVEL_1 = [
-    [0,0,0,0,0,0,0,0,0,0],
-    [0,1,1,1,1,1,1,1,1,0],
-    [0,1,2,2,1,1,3,3,1,0],
-    [0,1,2,2,1,1,3,3,1,0],
-    [0,1,1,1,1,1,1,1,1,0],
-    [0,1,4,1,1,5,1,4,1,0],
-    [0,1,1,1,1,1,1,1,1,0],
-    [0,0,0,0,0,0,0,0,0,0],
-];
-
-// --------------------------
 // Phaser configuration
 // --------------------------
 const config = {
@@ -55,9 +27,6 @@ const config = {
     }
 };
 
-// --------------------------
-// Create the Phaser game
-// --------------------------
 const game = new Phaser.Game(config);
 
 // --------------------------
@@ -73,24 +42,54 @@ function preload() {
 // Create the game world
 // --------------------------
 function create() {
-
-    for (let i = 0; i < 20; i++) {
-    this.add.image(16*i, 0, 'overworld', i).setScale(2).setOrigin(0);
-}
-for (let i = 0; i < 20; i++) {
-    this.add.image(16*i, 32, 'objects', i).setScale(2).setOrigin(0);
-}
-
     const solidObjects = this.physics.add.staticGroup();
     rocks = [];
 
-    // Calculate offsets to center the map
+    // --------------------------
+    // TEMP: Display first 20 frames for debugging
+    // --------------------------
+    for (let i = 0; i < 20; i++) {
+        this.add.image(16*i, 0, 'overworld', i).setScale(2).setOrigin(0);
+        this.add.image(16*i, 32, 'objects', i).setScale(2).setOrigin(0);
+    }
+
+    // --------------------------
+    // Once you confirm which frame number is which, update these constants:
+    // --------------------------
+    const GRASS = 0;    // <-- frame number of grass in Overworld.png
+    const WATER = 1;    // <-- frame number of water in Overworld.png
+    const ROCK  = 42;   // <-- frame number of rock in Objects.png
+    const BUSH  = 38;   // <-- frame number of bush in Objects.png
+    const TREE  = 70;   // <-- frame number of tree in Objects.png
+    const PLAYER_START_FRAME = 0; // frame for your character sprite
+
+    // --------------------------
+    // Level 1 map layout
+    // 0 = empty, 1 = grass, 2 = water
+    // 3 = rocks, 4 = bush, 5 = tree
+    // --------------------------
+    const LEVEL_1 = [
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,1,1,1,1,1,1,1,1,0],
+        [0,1,2,2,1,1,3,3,1,0],
+        [0,1,2,2,1,1,3,3,1,0],
+        [0,1,1,1,1,1,1,1,1,0],
+        [0,1,4,1,1,5,1,4,1,0],
+        [0,1,1,1,1,1,1,1,1,0],
+        [0,0,0,0,0,0,0,0,0,0],
+    ];
+
+    // --------------------------
+    // Centering offsets
+    // --------------------------
     const mapWidthPx = LEVEL_1[0].length * TILE_SIZE * SCALE;
     const mapHeightPx = LEVEL_1.length * TILE_SIZE * SCALE;
     const offsetX = (this.scale.width - mapWidthPx) / 2;
     const offsetY = (this.scale.height - mapHeightPx) / 2;
 
+    // --------------------------
     // Build the world
+    // --------------------------
     LEVEL_1.forEach((row, y) => {
         row.forEach((tile, x) => {
             const worldX = offsetX + x * TILE_SIZE * SCALE;
@@ -136,19 +135,24 @@ for (let i = 0; i < 20; i++) {
         });
     });
 
+    // --------------------------
     // Player sprite
+    // --------------------------
     player = this.physics.add.sprite(
         offsetX + 5 * TILE_SIZE * SCALE,
         offsetY + 6 * TILE_SIZE * SCALE,
         'player',
         PLAYER_START_FRAME
     ).setScale(SCALE);
+
     player.setCollideWorldBounds(true);
     this.physics.add.collider(player, solidObjects);
 
     cursors = this.input.keyboard.createCursorKeys();
 
+    // --------------------------
     // Rock interaction
+    // --------------------------
     rocks.forEach((rock) => {
         rock.on('pointerdown', () => {
             if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 40) {
@@ -182,5 +186,4 @@ function update() {
 window.addEventListener('resize', () => {
     game.scale.resize(window.innerWidth, window.innerHeight);
 });
-
 
