@@ -17,13 +17,13 @@ const game = new Phaser.Game(config);
 // Globals
 // -------------------------
 let player, cursors;
-let rocks = [], trash = [], envSprites = [];
+let rocks = [], envSprites = [];
 let score = 0, scoreText;
 let titleText, titleBg;
 let rockFlipSound, ambientSound, trashSound;
 
 let clickedCount = 0;
-let totalItems = 0; // rocks + trash
+let totalRocks = 12; // only rocks count for level completion
 let collectedBugs = [];
 
 // -------------------------
@@ -64,7 +64,7 @@ function preload() {
     macroinvertebrates.forEach(critter => this.load.image(critter.key, critter.sprite));
     trashItems.forEach(t => this.load.image(t.key, t.sprite));
 
-    // WAV/MP3 sounds
+    // Sounds
     this.load.audio('rockFlip', 'rockFlip.wav');
     this.load.audio('ambientWater', 'ambientWater.wav'); // looping background
     this.load.audio('trashSound', 'trash.wav'); // new trash sound
@@ -108,13 +108,10 @@ function create() {
     rockFlipSound = this.sound.add('rockFlip', { volume: 0.5 });
     ambientSound = this.sound.add('ambientWater', { loop: true, volume: 0.3 });
     ambientSound.play();
-    trashSound = this.sound.add('trashSound', { volume: 0.5 }); // new sound
+    trashSound = this.sound.add('trashSound', { volume: 0.5 });
 
     // Rocks
-    const rockCount = 12;
-    totalItems = rockCount + trashItems.length;
-
-    for (let i = 0; i < rockCount; i++) {
+    for (let i = 0; i < totalRocks; i++) {
         const randX = Phaser.Math.FloatBetween(0.1, 0.9);
         const randY = Phaser.Math.FloatBetween(0.3, 0.8);
         const rock = this.physics.add.sprite(w * randX, h * randY, 'rock')
@@ -122,47 +119,32 @@ function create() {
             .setInteractive()
             .setDepth(2);
 
-        rock.macro = Phaser.Utils.Array.GetRandom(macroinvertebrates);
         rocks.push(rock);
 
         rock.on('pointerdown', () => {
             if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
-                rockFlipSound.play();
+                // Randomly determine if it's a bug or trash
+                let isTrash = Phaser.Math.Between(1, 100) <= 20; // 20% chance trash
+                let content;
+                if(isTrash) {
+                    content = Phaser.Utils.Array.GetRandom(trashItems);
+                    trashSound.play();
+                    score += content.points; // negative points
+                } else {
+                    content = Phaser.Utils.Array.GetRandom(macroinvertebrates);
+                    rockFlipSound.play();
+                    score += 10;
+                    collectedBugs.push(content.name);
+                }
+
                 rock.destroy();
-                score += 10;
                 scoreText.setText('Score: ' + score);
-                collectedBugs.push(rock.macro.name);
-                updateExplorer(rock.macro);
+                updateExplorer(content);
                 clickedCount++;
-                if (clickedCount >= totalItems) showLevelSummary();
+                if(clickedCount >= totalRocks) showLevelSummary();
             } else console.log('Move closer to flip the rock!');
         });
     }
-
-    // Trash
-    trashItems.forEach(item => {
-        const randX = Phaser.Math.FloatBetween(0.1, 0.9);
-        const randY = Phaser.Math.FloatBetween(0.3, 0.8);
-        const t = this.physics.add.sprite(w * randX, h * randY, item.key)
-            .setScale(0.3)
-            .setInteractive()
-            .setDepth(2);
-
-        t.macro = item;
-        trash.push(t);
-
-        t.on('pointerdown', () => {
-            if (Phaser.Math.Distance.Between(player.x, player.y, t.x, t.y) < 60) {
-                trashSound.play(); // <-- play trash sound
-                t.destroy();
-                score += t.macro.points; // negative points
-                scoreText.setText('Score: ' + score);
-                updateExplorer(t.macro);
-                clickedCount++;
-                if (clickedCount >= totalItems) showLevelSummary();
-            } else console.log('Move closer to flip the trash!');
-        });
-    });
 
     window.addEventListener('resize', resizeGame);
 }
@@ -192,17 +174,17 @@ function resizeGame() {
     titleText.setPosition(w/2,8);
 
     bushes.forEach((b,i)=> envSprites[i].setPosition(w*b.x, h*b.y));
-    rocks.concat(trash).forEach(r => { if(r.active) r.setPosition(r.x/w * w, r.y/h * h); });
+    rocks.forEach(r => { if(r.active) r.setPosition(r.x/w * w, r.y/h * h); });
     player.setPosition(w/2,h*0.8);
 }
 
 // -------------------------
 // Explorer Panel Update
 // -------------------------
-function updateExplorer(critter) {
-    document.getElementById("explorerImage").src = critter.sprite;
-    document.getElementById("explorerName").innerText = critter.name;
-    document.getElementById("explorerText").innerText = critter.blurb;
+function updateExplorer(item) {
+    document.getElementById("explorerImage").src = item.sprite;
+    document.getElementById("explorerName").innerText = item.name;
+    document.getElementById("explorerText").innerText = item.blurb;
 }
 
 // -------------------------
@@ -214,6 +196,6 @@ function showLevelSummary() {
     for (let bug in bugCounts) summary += `- ${bug} x${bugCounts[bug]}\n`;
     summary += `\nTrash Collected:\n`;
     trashItems.forEach(t => summary += `- ${t.name} (negative points)\n`);
-    alert(summary); // can be replaced with styled panel later
+    alert(summary);
 }
 
