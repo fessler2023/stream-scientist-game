@@ -13,9 +13,11 @@ let score = 0;
 // --------------------------
 const GRASS = 0;
 const WATER = 1;
+
 const ROCK = 42;
 const BUSH = 38;
 const TREE = 70;
+
 const PLAYER_START_FRAME = 0;
 
 // --------------------------
@@ -62,87 +64,84 @@ const game = new Phaser.Game(config);
 // Preload assets
 // --------------------------
 function preload() {
-    this.load.spritesheet('overworld', 'assets/Overworld.png', { frameWidth: 16, frameHeight: 16 });
-    this.load.spritesheet('objects', 'assets/objects.png', { frameWidth: 16, frameHeight: 16 });
-    this.load.spritesheet('player', 'assets/character.png', { frameWidth: 16, frameHeight: 16 });
+    this.load.spritesheet('overworld', 'assets/Overworld.png', { frameWidth: TILE_SIZE, frameHeight: TILE_SIZE });
+    this.load.spritesheet('objects', 'assets/objects.png', { frameWidth: TILE_SIZE, frameHeight: TILE_SIZE });
+    this.load.spritesheet('player', 'assets/character.png', { frameWidth: TILE_SIZE, frameHeight: TILE_SIZE });
 }
 
 // --------------------------
 // Create the game world
 // --------------------------
 function create() {
-    for (let i = 0; i < 20; i++) {  // just first 20 frames for testing
-    this.add.image(16*i, 0, 'overworld', i).setScale(2).setOrigin(0);
-}
-
     const solidObjects = this.physics.add.staticGroup();
     rocks = [];
+
+    // Calculate offsets to center the map
+    const mapWidthPx = LEVEL_1[0].length * TILE_SIZE * SCALE;
+    const mapHeightPx = LEVEL_1.length * TILE_SIZE * SCALE;
+    const offsetX = (this.scale.width - mapWidthPx) / 2;
+    const offsetY = (this.scale.height - mapHeightPx) / 2;
 
     // Build the world
     LEVEL_1.forEach((row, y) => {
         row.forEach((tile, x) => {
-            const worldX = x * TILE_SIZE * SCALE;
-            const worldY = y * TILE_SIZE * SCALE;
+            const worldX = offsetX + x * TILE_SIZE * SCALE;
+            const worldY = offsetY + y * TILE_SIZE * SCALE;
 
-            if (tile === 1) {
-                this.add.image(worldX, worldY, 'overworld', GRASS)
-                    .setOrigin(0)
-                    .setScale(SCALE);
-            }
-
-            if (tile === 2) {
-                this.add.image(worldX, worldY, 'overworld', WATER)
-                    .setOrigin(0)
-                    .setScale(SCALE);
-            }
-
-            if (tile === 3) {
-                const rock = this.physics.add.sprite(
-                    worldX + TILE_SIZE,
-                    worldY + TILE_SIZE,
-                    'objects',
-                    ROCK
-                ).setScale(SCALE).setInteractive();
-
-                rocks.push(rock);
-            }
-
-            if (tile === 4) {
-                solidObjects.create(
-                    worldX + TILE_SIZE,
-                    worldY + TILE_SIZE,
-                    'objects',
-                    BUSH
-                ).setScale(SCALE);
-            }
-
-            if (tile === 5) {
-                solidObjects.create(
-                    worldX + TILE_SIZE,
-                    worldY + TILE_SIZE,
-                    'objects',
-                    TREE
-                ).setScale(SCALE);
+            switch(tile) {
+                case 1: // Grass
+                    this.add.image(worldX, worldY, 'overworld', GRASS)
+                        .setOrigin(0)
+                        .setScale(SCALE);
+                    break;
+                case 2: // Water
+                    this.add.image(worldX, worldY, 'overworld', WATER)
+                        .setOrigin(0)
+                        .setScale(SCALE);
+                    break;
+                case 3: // Rock
+                    const rock = this.physics.add.sprite(
+                        worldX + TILE_SIZE,
+                        worldY + TILE_SIZE,
+                        'objects',
+                        ROCK
+                    ).setScale(SCALE).setInteractive();
+                    rocks.push(rock);
+                    break;
+                case 4: // Bush
+                    solidObjects.create(
+                        worldX + TILE_SIZE,
+                        worldY + TILE_SIZE,
+                        'objects',
+                        BUSH
+                    ).setScale(SCALE);
+                    break;
+                case 5: // Tree
+                    solidObjects.create(
+                        worldX + TILE_SIZE,
+                        worldY + TILE_SIZE,
+                        'objects',
+                        TREE
+                    ).setScale(SCALE);
+                    break;
             }
         });
     });
 
-    // Player
+    // Player sprite
     player = this.physics.add.sprite(
-        5 * TILE_SIZE * SCALE,
-        6 * TILE_SIZE * SCALE,
+        offsetX + 5 * TILE_SIZE * SCALE,
+        offsetY + 6 * TILE_SIZE * SCALE,
         'player',
         PLAYER_START_FRAME
     ).setScale(SCALE);
-
     player.setCollideWorldBounds(true);
-
     this.physics.add.collider(player, solidObjects);
 
     cursors = this.input.keyboard.createCursorKeys();
 
     // Rock interaction
-    rocks.forEach((rock, index) => {
+    rocks.forEach((rock) => {
         rock.on('pointerdown', () => {
             if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 40) {
                 score += 10;
@@ -175,6 +174,4 @@ function update() {
 window.addEventListener('resize', () => {
     game.scale.resize(window.innerWidth, window.innerHeight);
 });
-
-
 
