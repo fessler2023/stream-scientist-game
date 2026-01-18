@@ -86,29 +86,22 @@ function create() {
     // Rocks
     rockPositions.forEach(pos => {
         const rock = this.physics.add.sprite(w*pos.x, h*pos.y, 'rock').setScale(0.5).setInteractive().setDepth(2);
+
+        // Assign a random insect to this rock
         rock.macro = Phaser.Utils.Array.GetRandom(macroinvertebrates);
+
         rocks.push(rock);
 
         rock.on('pointerdown', () => {
             if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
-                // Small pop-up in world
-                const critter = this.add.sprite(rock.x, rock.y, rock.macro.key);
-                const targetWidth = 64;
-                const scale = targetWidth / critter.width;
-                critter.setScale(scale).setDepth(3);
-                this.tweens.add({ targets: critter, scale:{from:0,to:scale}, duration:300, ease:'Back.Out' });
+                // Remove rock visually
+                this.tweens.add({ targets: rock, alpha: 0, duration: 300, onComplete: () => rock.destroy() });
 
+                // Update score
                 score += 10;
                 scoreText.setText('Score: ' + score);
 
-                const infoText = this.add.text(rock.x, rock.y-50, `You found a ${rock.macro.name}!\n${rock.macro.blurb}`, {
-                    font:'15px Arial', fill:'#fff', backgroundColor:'#000000AA', padding:6, wordWrap:{ width:220 }
-                }).setOrigin(0.5).setDepth(4);
-                this.time.delayedCall(4000, ()=> infoText.destroy());
-
-                this.tweens.add({ targets: rock, alpha:0, duration:300, onComplete:()=> rock.destroy() });
-
-                // --- NEW: Update Explorer Panel ---
+                // Update Explorer panel ONLY
                 updateExplorer(rock.macro);
             } else {
                 console.log('Move closer to flip the rock!');
@@ -116,6 +109,7 @@ function create() {
         });
     });
 
+    // Resize handling
     window.addEventListener('resize', resizeGame);
 }
 
@@ -149,10 +143,11 @@ function resizeGame() {
 }
 
 // -------------------------
-// Explorer Panel Function
+// Explorer Panel Update
 // -------------------------
 function updateExplorer(critter) {
     document.getElementById("explorerImage").src = critter.sprite;
     document.getElementById("explorerName").innerText = critter.name;
     document.getElementById("explorerText").innerText = critter.blurb;
 }
+
