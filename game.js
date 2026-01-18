@@ -21,7 +21,7 @@ let rocks = [];
 let envSprites = [];
 let score = 0, scoreText;
 let titleText, titleBg;
-let rockFlipSound; // sound for flipping rocks
+let rockFlipSound;
 
 // -------------------------
 // Insects Data
@@ -33,33 +33,13 @@ const macroinvertebrates = [
 ];
 
 // -------------------------
-// Environment Data
+// Environment Data (bushes only, trees will be random top border)
 // -------------------------
-const envObjects = [
-    // bushes (smaller scale)
+const bushes = [
     { key: 'bush', x: 0.85, y: 0.2, scale: 0.3 },
     { key: 'bush', x: 0.75, y: 0.85, scale: 0.3 },
     { key: 'bush', x: 0.4, y: 0.7, scale: 0.3 },
-    { key: 'bush', x: 0.2, y: 0.4, scale: 0.3 },
-
-    // trees (top border, layered)
-    { key: 'tree', x: 0.05, y: 0.05, scale: 0.5, depth: 1 },
-    { key: 'tree', x: 0.25, y: 0.03, scale: 0.6, depth: 2 },
-    { key: 'tree', x: 0.45, y: 0.04, scale: 0.5, depth: 1 },
-    { key: 'tree', x: 0.65, y: 0.02, scale: 0.7, depth: 2 },
-    { key: 'tree', x: 0.85, y: 0.05, scale: 0.5, depth: 1 }
-];
-
-// rock positions (more rocks)
-const rockPositions = [
-    { x: 0.15, y: 0.5 },
-    { x: 0.25, y: 0.6 },
-    { x: 0.35, y: 0.4 },
-    { x: 0.45, y: 0.3 },
-    { x: 0.55, y: 0.25 },
-    { x: 0.65, y: 0.35 },
-    { x: 0.75, y: 0.55 },
-    { x: 0.85, y: 0.45 }
+    { key: 'bush', x: 0.2, y: 0.4, scale: 0.3 }
 ];
 
 // -------------------------
@@ -69,8 +49,7 @@ function preload() {
     this.load.image('player', 'player.png');
     this.load.image('rock', 'rock.png');
     this.load.image('tree', 'tree.png');
-    this.load.image('bush', 'bush.png');
-
+    bushes.forEach(b => this.load.image(b.key, b.key + '.png'));
     macroinvertebrates.forEach(critter => this.load.image(critter.key, critter.sprite));
 
     // Load WAV sound
@@ -92,47 +71,57 @@ function create() {
     // Score
     scoreText = this.add.text(10, 50, 'Score: 0', { font:'18px Arial', fill:'#fff' }).setDepth(11);
 
-    // Environment
-    envObjects.forEach(obj => {
-        const depth = obj.depth || 1;
-        const scale = obj.scale || 0.5;
-        const sprite = this.add.image(w*obj.x, h*obj.y, obj.key).setScale(scale).setDepth(depth);
+    // Bushes
+    bushes.forEach(obj => {
+        const sprite = this.add.image(w*obj.x, h*obj.y, obj.key).setScale(obj.scale).setDepth(1);
         envSprites.push(sprite);
     });
+
+    // Trees top border (randomized)
+    const treeCount = 10;
+    for (let i = 0; i < treeCount; i++) {
+        const randX = Phaser.Math.FloatBetween(0, 1);
+        const scale = Phaser.Math.FloatBetween(0.5, 0.7);
+        const depth = Phaser.Math.Between(1, 2);
+        this.add.image(w * randX, h * 0.05, 'tree').setScale(scale).setDepth(depth);
+    }
 
     // Player
     player = this.physics.add.sprite(w/2, h*0.8, 'player').setScale(0.5).setCollideWorldBounds(true).setDepth(2);
     cursors = this.input.keyboard.createCursorKeys();
 
     // Rocks
-    rockFlipSound = this.sound.add('rockFlip', { volume: 0.5 }); // WAV sound
-    rockPositions.forEach(pos => {
-        const rock = this.physics.add.sprite(w*pos.x, h*pos.y, 'rock').setScale(0.5).setInteractive().setDepth(2);
+    rockFlipSound = this.sound.add('rockFlip', { volume: 0.5 });
+    const rockCount = 12; // total rocks
+    for (let i = 0; i < rockCount; i++) {
+        const randX = Phaser.Math.FloatBetween(0.1, 0.9);
+        const randY = Phaser.Math.FloatBetween(0.3, 0.8);
+        const rock = this.physics.add.sprite(w * randX, h * randY, 'rock')
+            .setScale(Phaser.Math.FloatBetween(0.4, 0.5))
+            .setInteractive()
+            .setDepth(2);
+
+        // assign random bug
         rock.macro = Phaser.Utils.Array.GetRandom(macroinvertebrates);
         rocks.push(rock);
 
         rock.on('pointerdown', () => {
             if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
-                // Play the WAV rock flip sound
                 rockFlipSound.play();
-
                 this.tweens.add({
                     targets: rock,
                     alpha: 0,
                     duration: 300,
                     onComplete: () => rock.destroy()
                 });
-
                 score += 10;
                 scoreText.setText('Score: ' + score);
-
-                // Update Explorer panel ONLY
                 updateExplorer(rock.macro);
             } else {
                 console.log('Move closer to flip the rock!');
             }
         });
-    });
+    }
 
     // Handle window resize
     window.addEventListener('resize', resizeGame);
@@ -162,8 +151,8 @@ function resizeGame() {
     titleBg.setPosition(w/2,0);
     titleText.setPosition(w/2,8);
 
-    envObjects.forEach((obj,i)=> envSprites[i].setPosition(w*obj.x, h*obj.y));
-    rockPositions.forEach((pos,i)=> { if(rocks[i] && rocks[i].active) rocks[i].setPosition(w*pos.x,h*pos.y); });
+    bushes.forEach((b,i)=> envSprites[i].setPosition(w*b.x, h*b.y));
+    rocks.forEach((r,i)=> { if(r.active) r.setPosition(r.x/w * w, r.y/h * h); });
     player.setPosition(w/2,h*0.8);
 }
 
@@ -175,4 +164,3 @@ function updateExplorer(critter) {
     document.getElementById("explorerName").innerText = critter.name;
     document.getElementById("explorerText").innerText = critter.blurb;
 }
-
