@@ -21,7 +21,7 @@ let rocks = [];
 let envSprites = [];
 let score = 0, scoreText;
 let titleText, titleBg;
-let rockFlipSound;
+let rockFlipSound, ambientSound;
 
 // -------------------------
 // Insects Data
@@ -52,8 +52,9 @@ function preload() {
     bushes.forEach(b => this.load.image(b.key, b.key + '.png'));
     macroinvertebrates.forEach(critter => this.load.image(critter.key, critter.sprite));
 
-    // Load WAV sound
+    // Load WAV sounds
     this.load.audio('rockFlip', 'rockFlip.wav');
+    this.load.audio('ambientWater', 'ambientWater.wav'); // your 43-second ambient
 }
 
 // -------------------------
@@ -90,9 +91,13 @@ function create() {
     player = this.physics.add.sprite(w/2, h*0.8, 'player').setScale(0.5).setCollideWorldBounds(true).setDepth(2);
     cursors = this.input.keyboard.createCursorKeys();
 
-    // Rocks
+    // Sounds
     rockFlipSound = this.sound.add('rockFlip', { volume: 0.5 });
-    const rockCount = 12; // total rocks
+    ambientSound = this.sound.add('ambientWater', { loop: true, volume: 0.3 });
+    ambientSound.play(); // start looping background sound
+
+    // Rocks
+    const rockCount = 12;
     for (let i = 0; i < rockCount; i++) {
         const randX = Phaser.Math.FloatBetween(0.1, 0.9);
         const randY = Phaser.Math.FloatBetween(0.3, 0.8);
@@ -152,7 +157,7 @@ function resizeGame() {
     titleText.setPosition(w/2,8);
 
     bushes.forEach((b,i)=> envSprites[i].setPosition(w*b.x, h*b.y));
-    rocks.forEach((r,i)=> { if(r.active) r.setPosition(r.x/w * w, r.y/h * h); });
+    rocks.forEach(r => { if(r.active) r.setPosition(r.x/w * w, r.y/h * h); });
     player.setPosition(w/2,h*0.8);
 }
 
@@ -164,3 +169,4 @@ function updateExplorer(critter) {
     document.getElementById("explorerName").innerText = critter.name;
     document.getElementById("explorerText").innerText = critter.blurb;
 }
+
