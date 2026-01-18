@@ -1,3 +1,6 @@
+// -------------------------
+// Phaser Config
+// -------------------------
 const config = {
     type: Phaser.AUTO,
     width: window.innerWidth,
@@ -29,7 +32,7 @@ const macroinvertebrates = [
 ];
 
 // -------------------------
-// Environment
+// Environment Data
 // -------------------------
 const envObjects = [
     { key: 'tree', x: 0.1, y: 0.15 },
@@ -92,10 +95,17 @@ function create() {
 
         rocks.push(rock);
 
+        // Rock flip handler
         rock.on('pointerdown', () => {
             if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
+
                 // Remove rock visually
-                this.tweens.add({ targets: rock, alpha: 0, duration: 300, onComplete: () => rock.destroy() });
+                this.tweens.add({
+                    targets: rock,
+                    alpha: 0,
+                    duration: 300,
+                    onComplete: () => rock.destroy()
+                });
 
                 // Update score
                 score += 10;
@@ -103,6 +113,7 @@ function create() {
 
                 // Update Explorer panel ONLY
                 updateExplorer(rock.macro);
+
             } else {
                 console.log('Move closer to flip the rock!');
             }
@@ -119,8 +130,10 @@ function create() {
 function update() {
     player.setVelocity(0);
     const speed = 200;
+
     if(cursors.left.isDown) player.setVelocityX(-speed);
     else if(cursors.right.isDown) player.setVelocityX(speed);
+
     if(cursors.up.isDown) player.setVelocityY(-speed);
     else if(cursors.down.isDown) player.setVelocityY(speed);
 }
@@ -150,4 +163,3 @@ function updateExplorer(critter) {
     document.getElementById("explorerName").innerText = critter.name;
     document.getElementById("explorerText").innerText = critter.blurb;
 }
-
