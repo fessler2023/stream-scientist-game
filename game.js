@@ -45,8 +45,10 @@ const trashItems = [
     { key: 'can', sprite: 'can.png', name: 'Trash', blurb: 'Litter left on land often ends up in our waterways, carried by wind and rain into habitats where it doesn’t belong. Keeping trash out of our rivers protects wildlife, water quality, and the spaces we all share.', points: -5 },
     { key: 'glass', sprite: 'glass.png', name: 'Broken Glass', blurb: 'Broken glass can injure wildlife and people exploring the stream.', points: -4 },
     { key: 'tire', sprite: 'tire.png', name: 'Tire', blurb: 'Tires leach chemicals into water and block natural stream flow.', points: -8 },
-    { key: 'cigarette', sprite: 'cigarette.png', name: 'Cigarette Butt', blurb: 'Cigarette butts leach toxic chemicals and are harmful to fish and wildlife.', points: -3 }
+    { key: 'cigarette', sprite: 'cigarette.png', name: 'Cigarette Butt', blurb: 'Cigarette butts leach toxic chemicals and are harmful to fish and wildlife.', points: -3 },
+    { key: 'styrofoam', sprite: 'styrofoam.png', name: 'Styrofoam', blurb: 'Styrofoam breaks into tiny pieces that are ingested by wildlife and never fully biodegrade.', points: -6 }
 ];
+
 
 
 
@@ -206,6 +208,7 @@ function showLevelSummary() {
     trashItems.forEach(t => summary += `- ${t.name} (negative points)\n`);
     alert(summary);
 }
+
 
 
 
