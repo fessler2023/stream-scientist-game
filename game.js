@@ -25,39 +25,33 @@ let rockFlipSound, ambientSound, trashSound;
 let clickedCount = 0;
 let totalRocks = 12; // only rocks count for level completion
 let collectedBugs = [];
+let flippedTrash = []; // tracks trash actually flipped
 
 // -------------------------
 // Insects Data
 // -------------------------
 const macroinvertebrates = [
-    { key: 'caddisfly', sprite: 'caddisfly.png', name: 'Caddisfly Larva', blurb: 'Caddisfly larvae often build protective cases and indicate clean water.' },
-    { key: 'hellgrammite', sprite: 'hellgrammite.png', name: 'Hellgrammite', blurb: 'Hellgrammites are fierce predators found in fast-moving, oxygen-rich streams.' },
-    { key: 'mayfly', sprite: 'mayfly.png', name: 'Mayfly Nymph', blurb: 'Mayfly nymphs are sensitive to pollution and signal excellent water quality.' },
-    { key: 'crayfish', sprite: 'crayfish.png', name: 'Crayfish', blurb: 'Crayfish are scavengers that help clean streams and indicate healthy aquatic habitats.' },
-    { key: 'stonefly', sprite: 'stonefly.png', name: 'Stonefly Nymph', blurb: 'Stonefly nymphs require high oxygen levels and fast-flowing water, making them excellent indicators of clean streams.' },
-    { key: 'dragonfly', sprite: 'dragonfly.png', name: 'Dragonfly Nymph', blurb: 'Dragonfly nymphs are predatory insects that help control mosquito populations in freshwater habitats.' },
-    { key: 'aquaticworm', sprite: 'aquaticworm.png', name: 'Aquatic Worm', blurb: 'Aquatic worms are detritivores, breaking down organic matter and recycling nutrients in streams.' }
+    { key: 'caddisfly', sprite: 'caddisfly.png', name: 'Caddisfly Larva', blurb: 'Caddisfly larvae often build protective cases from sand and twigs. They indicate clean water and help stabilize streambeds.' },
+    { key: 'hellgrammite', sprite: 'hellgrammite.png', name: 'Hellgrammite', blurb: 'Hellgrammites are fierce predators found in fast-moving, oxygen-rich streams. They feed on other invertebrates, helping maintain balance in aquatic ecosystems.' },
+    { key: 'mayfly', sprite: 'mayfly.png', name: 'Mayfly Nymph', blurb: 'Mayfly nymphs are very sensitive to pollution and signal excellent water quality. Their presence supports fish like trout and bass.' },
+    { key: 'crayfish', sprite: 'crayfish.png', name: 'Crayfish', blurb: 'Crayfish are scavengers that help clean streams by eating dead plants and animals. They are an important food source for fish and birds.' },
+    { key: 'stonefly', sprite: 'stonefly.png', name: 'Stonefly Nymph', blurb: 'Stonefly nymphs require high oxygen levels and fast-flowing water, making them excellent indicators of clean streams. They help control populations of other aquatic insects.' },
+    { key: 'dragonfly', sprite: 'dragonfly.png', name: 'Dragonfly Nymph', blurb: 'Dragonfly nymphs are predatory insects that help control mosquito populations in freshwater habitats. They are an important part of the food web.' },
+    { key: 'aquaticworm', sprite: 'aquaticworm.png', name: 'Aquatic Worm', blurb: 'Aquatic worms are detritivores, breaking down organic matter and recycling nutrients in streams. They improve water quality and provide food for fish.' }
 ];
-
-
 
 // -------------------------
 // Trash Data
 // -------------------------
 const trashItems = [
-    { key: 'plastic', sprite: 'plastic.png', name: 'Plastic Bottle', blurb: 'Plastic trash harms aquatic life and pollutes streams.', points: -5 },
-    { key: 'can', sprite: 'can.png', name: 'Trash', blurb: 'Litter left on land often ends up in our waterways, carried by wind and rain into habitats where it doesn’t belong. Keeping trash out of our rivers protects wildlife, water quality, and the spaces we all share.', points: -5 },
-    { key: 'glass', sprite: 'glass.png', name: 'Broken Glass', blurb: 'Broken glass can injure wildlife and people exploring the stream.', points: -4 },
-    { key: 'tire', sprite: 'tire.png', name: 'Tire', blurb: 'Tires leach chemicals into water and block natural stream flow.', points: -8 },
-    { key: 'cigarette', sprite: 'cigarette.png', name: 'Cigarette Butt', blurb: 'Cigarette butts leach toxic chemicals and are harmful to fish and wildlife.', points: -3 },
-    { key: 'styrofoam', sprite: 'styrofoam.png', name: 'Styrofoam', blurb: 'Styrofoam breaks into tiny pieces that are ingested by wildlife and never fully biodegrade.', points: -6 },
+    { key: 'plastic', sprite: 'plastic.png', name: 'Plastic Bottle', blurb: 'Plastic trash harms aquatic life, pollutes streams, and can break down into microplastics that enter the food chain.', points: -5 },
+    { key: 'can', sprite: 'can.png', name: 'Aluminum Can', blurb: 'Litter left on land often ends up in waterways. Recycling cans helps conserve resources and protect wildlife.', points: -5 },
+    { key: 'glass', sprite: 'glass.png', name: 'Broken Glass', blurb: 'Broken glass can injure wildlife and people exploring the stream. Glass does not degrade quickly and can stay in the environment for decades.', points: -4 },
+    { key: 'tire', sprite: 'tire.png', name: 'Tire', blurb: 'Tires leach chemicals into water, block natural stream flow, and create hazards for fish and other aquatic life.', points: -8 },
+    { key: 'cigarette', sprite: 'cigarette.png', name: 'Cigarette Butt', blurb: 'Cigarette butts leach toxic chemicals and are harmful to fish and wildlife. Even one butt can contaminate a liter of water.', points: -3 },
+    { key: 'styrofoam', sprite: 'styrofoam.png', name: 'Styrofoam', blurb: 'Styrofoam breaks into tiny pieces that are ingested by wildlife and never fully biodegrade, persisting in the environment for centuries.', points: -6 },
     { key: 'fishingLine', sprite: 'fishingLine.png', name: 'Fishing Line', blurb: 'Discarded fishing line can entangle fish, birds, and other wildlife, causing injury or death.', points: -7 }
 ];
-
-
-
-
-
 
 // -------------------------
 // Environment Data (bushes only)
@@ -146,6 +140,7 @@ function create() {
                     content = Phaser.Utils.Array.GetRandom(trashItems);
                     trashSound.play();
                     score += content.points; // negative points
+                    flippedTrash.push(content.name); // track trash actually flipped
                 } else {
                     content = Phaser.Utils.Array.GetRandom(macroinvertebrates);
                     rockFlipSound.play();
@@ -208,22 +203,13 @@ function updateExplorer(item) {
 // -------------------------
 function showLevelSummary() {
     let summary = `Level Complete!\nScore: ${score}\n\nBugs Collected:\n`;
-    const bugCounts = collectedBugs.reduce((acc, name) => { acc[name] = (acc[name]||0)+1; return acc; }, {});
+
+    const bugCounts = collectedBugs.reduce((acc, name) => { acc[name] = (acc[name] || 0) + 1; return acc; }, {});
     for (let bug in bugCounts) summary += `- ${bug} x${bugCounts[bug]}\n`;
+
     summary += `\nTrash Collected:\n`;
-    trashItems.forEach(t => summary += `- ${t.name} (negative points)\n`);
+    const trashCounts = flippedTrash.reduce((acc, name) => { acc[name] = (acc[name] || 0) + 1; return acc; }, {});
+    for (let t in trashCounts) summary += `- ${t} x${trashCounts[t]}\n`;
+
     alert(summary);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
