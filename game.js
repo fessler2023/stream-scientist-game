@@ -216,22 +216,43 @@ function updateExplorer(item) {
 }
 
 // -------------------------
-// Level Summary
+// Level Summary with Optional Feedback
 // -------------------------
 function showLevelSummary() {
+    // Build the summary text
     let summary = `Level Complete!\nScore: ${score}\n\nBugs Collected:\n`;
-    const bugCounts = collectedBugs.reduce((acc, name) => { acc[name] = (acc[name]||0)+1; return acc; }, {});
-    for (let bug in bugCounts) summary += `- ${bug} x${bugCounts[bug]}\n`;
+    
+    const bugCounts = collectedBugs.reduce((acc, name) => {
+        acc[name] = (acc[name] || 0) + 1;
+        return acc;
+    }, {});
+    
+    for (let bug in bugCounts) {
+        summary += `- ${bug} x${bugCounts[bug]}\n`;
+    }
+
     summary += `\nTrash Collected:\n`;
     trashItems.forEach(t => summary += `- ${t.name} (negative points)\n`);
 
-    summary += `\n\nWe’d love your feedback!\nClick OK to rate your experience.`;
-
+    // Show the alert summary
     alert(summary);
 
-    // Open Google Form in a new tab
-    window.open('https://docs.google.com/forms/d/e/1FAIpQLScFHSVlx0Fp4j5Kp8qVK7krCadWA7juq-U34Pt_ZWN8IUARKw/viewform?usp=sf_link', '_blank');
+    // Ask for feedback
+    const wantsFeedback = confirm("Would you like to provide feedback on this level? Click OK to go to the feedback form, or Cancel to continue playing.");
+
+    if (wantsFeedback) {
+        // Open the Google Form in a new tab
+        window.open(
+            "https://docs.google.com/forms/d/e/1FAIpQLScFHSVlx0Fp4j5Kp8qVK7krCadWA7juq-U34Pt_ZWN8IUARKw/viewform?usp=sf_link",
+            "_blank"
+        );
+    } else {
+        // Reload the page to reset the level
+        window.location.reload();
+    }
 }
+
+
 
 
 
