@@ -32,8 +32,10 @@ let collectedBugs = [];
 const macroinvertebrates = [
     { key: 'caddisfly', sprite: 'caddisfly.png', name: 'Caddisfly Larva', blurb: 'Caddisfly larvae often build protective cases and indicate clean water.' },
     { key: 'hellgrammite', sprite: 'hellgrammite.png', name: 'Hellgrammite', blurb: 'Hellgrammites are fierce predators found in fast-moving, oxygen-rich streams.' },
-    { key: 'mayfly', sprite: 'mayfly.png', name: 'Mayfly Nymph', blurb: 'Mayfly nymphs are sensitive to pollution and signal excellent water quality.' }
+    { key: 'mayfly', sprite: 'mayfly.png', name: 'Mayfly Nymph', blurb: 'Mayfly nymphs are sensitive to pollution and signal excellent water quality.' },
+    { key: 'crayfish', sprite: 'crayfish.png', name: 'Crayfish', blurb: 'Crayfish are scavengers that help clean streams and indicate healthy aquatic habitats.' }
 ];
+
 
 // -------------------------
 // Trash Data
@@ -202,6 +204,7 @@ function showLevelSummary() {
     trashItems.forEach(t => summary += `- ${t.name} (negative points)\n`);
     alert(summary);
 }
+
 
 
 
