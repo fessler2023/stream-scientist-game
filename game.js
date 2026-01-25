@@ -42,6 +42,7 @@ const trashItems = [
     { key: 'plastic', sprite: 'plastic.png', name: 'Plastic Bottle', blurb: 'Plastic trash harms aquatic life and pollutes streams.', points: -5 },
     { key: 'can', sprite: 'can.png', name: 'Trash', blurb: 'Litter left on land often ends up in our waterways, carried by wind and rain into habitats where it doesn’t belong. Keeping trash out of our rivers protects wildlife, water quality, and the spaces we all share.', points: -5 },
     { key: 'glass', sprite: 'glass.png', name: 'Broken Glass', blurb: 'Broken glass can injure wildlife and people exploring the stream.', points: -4 }
+        {key: 'tire', sprite: 'tire.png', name: 'Tire', blurb: 'Tires leach chemicals into water and block natural stream flow.', points: -8}
 ];
 
 
@@ -200,6 +201,7 @@ function showLevelSummary() {
     trashItems.forEach(t => summary += `- ${t.name} (negative points)\n`);
     alert(summary);
 }
+
 
 
 
