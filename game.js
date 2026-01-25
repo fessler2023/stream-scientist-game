@@ -33,8 +33,12 @@ const macroinvertebrates = [
     { key: 'caddisfly', sprite: 'caddisfly.png', name: 'Caddisfly Larva', blurb: 'Caddisfly larvae often build protective cases and indicate clean water.' },
     { key: 'hellgrammite', sprite: 'hellgrammite.png', name: 'Hellgrammite', blurb: 'Hellgrammites are fierce predators found in fast-moving, oxygen-rich streams.' },
     { key: 'mayfly', sprite: 'mayfly.png', name: 'Mayfly Nymph', blurb: 'Mayfly nymphs are sensitive to pollution and signal excellent water quality.' },
-    { key: 'crayfish', sprite: 'crayfish.png', name: 'Crayfish', blurb: 'Crayfish are scavengers that help clean streams and indicate healthy aquatic habitats.' }
+    { key: 'crayfish', sprite: 'crayfish.png', name: 'Crayfish', blurb: 'Crayfish are scavengers that help clean streams and indicate healthy aquatic habitats.' },
+    { key: 'stonefly', sprite: 'stonefly.png', name: 'Stonefly Nymph', blurb: 'Stonefly nymphs require high oxygen levels and fast-flowing water, making them excellent indicators of clean streams.' },
+    { key: 'dragonfly', sprite: 'dragonfly.png', name: 'Dragonfly Nymph', blurb: 'Dragonfly nymphs are predatory insects that help control mosquito populations in freshwater habitats.' },
+    { key: 'aquaticworm', sprite: 'aquaticworm.png', name: 'Aquatic Worm', blurb: 'Aquatic worms are detritivores, breaking down organic matter and recycling nutrients in streams.' }
 ];
+
 
 
 // -------------------------
@@ -210,6 +214,7 @@ function showLevelSummary() {
     trashItems.forEach(t => summary += `- ${t.name} (negative points)\n`);
     alert(summary);
 }
+
 
 
 
