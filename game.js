@@ -1,34 +1,48 @@
+/*
+========================================================================
+Program: The Adventures of Little Doug - Level 1
+Author: Douglas Fessler
+Date: 2026-01-25
+Description: 
+    This is an educational interactive game using Phaser 3. The player 
+    explores a stream environment, flips rocks to discover macroinvertebrates 
+    (bugs that indicate water quality) or trash items. Finding bugs 
+    increases the score, while trash reduces it. Players learn about 
+    stream ecology, pollution, and the importance of keeping waterways clean.
+========================================================================
+*/
+
 // -------------------------
 // Phaser Config
 // -------------------------
 const config = {
-    type: Phaser.AUTO,
-    width: window.innerWidth,
-    height: window.innerHeight,
-    backgroundColor: '#5DADE2',
-    physics: { default: 'arcade', arcade: { debug: false } },
-    scene: { preload, create, update },
-    scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH }
+    type: Phaser.AUTO, // Phaser chooses WebGL or Canvas automatically
+    width: window.innerWidth, // Full browser width
+    height: window.innerHeight, // Full browser height
+    backgroundColor: '#5DADE2', // Sky blue background
+    physics: { default: 'arcade', arcade: { debug: false } }, // Arcade physics engine, no debug
+    scene: { preload, create, update }, // Game lifecycle methods
+    scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH } // Resize to fit window, center
 };
 
-const game = new Phaser.Game(config);
+const game = new Phaser.Game(config); // Create the Phaser game
 
 // -------------------------
 // Globals
 // -------------------------
-let player, cursors;
-let rocks = [], envSprites = [];
-let score = 0, scoreText;
-let titleText, titleBg;
-let rockFlipSound, ambientSound, trashSound;
+let player, cursors; // Player sprite and keyboard input
+let rocks = [], envSprites = []; // Arrays for rocks and environment sprites
+let score = 0, scoreText; // Score and display text
+let titleText, titleBg; // Game title bar
+let rockFlipSound, ambientSound, trashSound; // Audio
 
-let clickedCount = 0;
-let totalRocks = 12; // only rocks count for level completion
-let collectedBugs = [];
-let flippedTrash = []; // tracks trash actually flipped
+let clickedCount = 0; // Tracks total rocks clicked
+let totalRocks = 12; // Rocks per level
+let collectedBugs = []; // Stores names of bugs found
+let flippedTrash = []; // Stores names of trash items found
 
 // -------------------------
-// Insects Data
+// Macroinvertebrates Data
 // -------------------------
 const macroinvertebrates = [
     { key: 'caddisfly', sprite: 'caddisfly.png', name: 'Caddisfly Larva', blurb: 'Caddisfly larvae often build protective cases from sand and twigs. They indicate clean water and help stabilize streambeds.' },
@@ -67,17 +81,18 @@ const bushes = [
 // Preload
 // -------------------------
 function preload() {
+    // Load images
     this.load.image('player', 'player.png');
     this.load.image('rock', 'rock.png');
     this.load.image('tree', 'tree.png');
-    bushes.forEach(b => this.load.image(b.key, b.key + '.png'));
-    macroinvertebrates.forEach(critter => this.load.image(critter.key, critter.sprite));
-    trashItems.forEach(t => this.load.image(t.key, t.sprite));
+    bushes.forEach(b => this.load.image(b.key, b.key + '.png')); // bushes
+    macroinvertebrates.forEach(critter => this.load.image(critter.key, critter.sprite)); // bugs
+    trashItems.forEach(t => this.load.image(t.key, t.sprite)); // trash
 
-    // Sounds
-    this.load.audio('rockFlip', 'rockFlip.wav');
-    this.load.audio('ambientWater', 'ambientWater.wav'); // looping background
-    this.load.audio('trashSound', 'trash.wav'); // new trash sound
+    // Load sounds
+    this.load.audio('rockFlip', 'rockFlip.wav'); // rock flip
+    this.load.audio('ambientWater', 'ambientWater.wav'); // looping background water
+    this.load.audio('trashSound', 'trash.wav'); // trash noise
 }
 
 // -------------------------
@@ -92,16 +107,16 @@ function create() {
     titleText = this.add.text(w/2, 8, 'The Adventures of Little Doug', { font:'22px Arial', fill:'#fff', fontStyle:'bold' })
         .setOrigin(0.5,0).setDepth(11);
 
-    // Score
+    // Score Text
     scoreText = this.add.text(10, 50, 'Score: 0', { font:'18px Arial', fill:'#fff' }).setDepth(11);
 
-    // Bushes
+    // Add bushes
     bushes.forEach(obj => {
         const sprite = this.add.image(w*obj.x, h*obj.y, obj.key).setScale(obj.scale).setDepth(1);
         envSprites.push(sprite);
     });
 
-    // Trees top border (randomized)
+    // Trees (randomized top border)
     const treeCount = 10;
     for (let i = 0; i < treeCount; i++) {
         const randX = Phaser.Math.FloatBetween(0, 1);
@@ -110,11 +125,11 @@ function create() {
         this.add.image(w * randX, h * 0.05, 'tree').setScale(scale).setDepth(depth);
     }
 
-    // Player
+    // Player sprite
     player = this.physics.add.sprite(w/2, h*0.8, 'player').setScale(0.5).setCollideWorldBounds(true).setDepth(2);
     cursors = this.input.keyboard.createCursorKeys();
 
-    // Sounds
+    // Load sounds
     rockFlipSound = this.sound.add('rockFlip', { volume: 0.5 });
     ambientSound = this.sound.add('ambientWater', { loop: true, volume: 0.3 });
     ambientSound.play();
@@ -131,16 +146,17 @@ function create() {
 
         rocks.push(rock);
 
+        // Rock click handler
         rock.on('pointerdown', () => {
             if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
-                // Randomly determine if it's a bug or trash
-                let isTrash = Phaser.Math.Between(1, 100) <= 20; // 20% chance trash
+                // Randomly choose trash (20%) or bug (80%)
+                let isTrash = Phaser.Math.Between(1, 100) <= 20;
                 let content;
                 if(isTrash) {
                     content = Phaser.Utils.Array.GetRandom(trashItems);
                     trashSound.play();
-                    score += content.points; // negative points
-                    flippedTrash.push(content.name); // track trash actually flipped
+                    score += content.points;
+                    flippedTrash.push(content.name);
                 } else {
                     content = Phaser.Utils.Array.GetRandom(macroinvertebrates);
                     rockFlipSound.play();
@@ -148,15 +164,16 @@ function create() {
                     collectedBugs.push(content.name);
                 }
 
-                rock.destroy();
+                rock.destroy(); // remove rock
                 scoreText.setText('Score: ' + score);
-                updateExplorer(content);
+                updateExplorer(content); // update explorer panel
                 clickedCount++;
                 if(clickedCount >= totalRocks) showLevelSummary();
             } else console.log('Move closer to flip the rock!');
         });
     }
 
+    // Handle window resize
     window.addEventListener('resize', resizeGame);
 }
 
@@ -204,12 +221,15 @@ function updateExplorer(item) {
 function showLevelSummary() {
     let summary = `Level Complete!\nScore: ${score}\n\nBugs Collected:\n`;
 
+    // Count bugs
     const bugCounts = collectedBugs.reduce((acc, name) => { acc[name] = (acc[name] || 0) + 1; return acc; }, {});
     for (let bug in bugCounts) summary += `- ${bug} x${bugCounts[bug]}\n`;
 
+    // Count trash found
     summary += `\nTrash Collected:\n`;
     const trashCounts = flippedTrash.reduce((acc, name) => { acc[name] = (acc[name] || 0) + 1; return acc; }, {});
     for (let t in trashCounts) summary += `- ${t} x${trashCounts[t]}\n`;
 
-    alert(summary);
+    alert(summary); // Show final score and collected items
 }
+
