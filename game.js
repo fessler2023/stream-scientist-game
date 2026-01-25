@@ -220,16 +220,18 @@ function updateExplorer(item) {
 // -------------------------
 function showLevelSummary() {
     let summary = `Level Complete!\nScore: ${score}\n\nBugs Collected:\n`;
-
-    // Count bugs
-    const bugCounts = collectedBugs.reduce((acc, name) => { acc[name] = (acc[name] || 0) + 1; return acc; }, {});
+    const bugCounts = collectedBugs.reduce((acc, name) => { acc[name] = (acc[name]||0)+1; return acc; }, {});
     for (let bug in bugCounts) summary += `- ${bug} x${bugCounts[bug]}\n`;
-
-    // Count trash found
     summary += `\nTrash Collected:\n`;
-    const trashCounts = flippedTrash.reduce((acc, name) => { acc[name] = (acc[name] || 0) + 1; return acc; }, {});
-    for (let t in trashCounts) summary += `- ${t} x${trashCounts[t]}\n`;
+    trashItems.forEach(t => summary += `- ${t.name} (negative points)\n`);
 
-    alert(summary); // Show final score and collected items
+    summary += `\n\nWe’d love your feedback!\nClick OK to rate your experience.`;
+
+    alert(summary);
+
+    // Open Google Form in a new tab
+    window.open('https://docs.google.com/forms/d/e/1FAIpQLScFHSVlx0Fp4j5Kp8qVK7krCadWA7juq-U34Pt_ZWN8IUARKw/viewform?usp=sf_link', '_blank');
 }
+
+
 
