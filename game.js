@@ -46,8 +46,10 @@ const trashItems = [
     { key: 'glass', sprite: 'glass.png', name: 'Broken Glass', blurb: 'Broken glass can injure wildlife and people exploring the stream.', points: -4 },
     { key: 'tire', sprite: 'tire.png', name: 'Tire', blurb: 'Tires leach chemicals into water and block natural stream flow.', points: -8 },
     { key: 'cigarette', sprite: 'cigarette.png', name: 'Cigarette Butt', blurb: 'Cigarette butts leach toxic chemicals and are harmful to fish and wildlife.', points: -3 },
-    { key: 'styrofoam', sprite: 'styrofoam.png', name: 'Styrofoam', blurb: 'Styrofoam breaks into tiny pieces that are ingested by wildlife and never fully biodegrade.', points: -6 }
+    { key: 'styrofoam', sprite: 'styrofoam.png', name: 'Styrofoam', blurb: 'Styrofoam breaks into tiny pieces that are ingested by wildlife and never fully biodegrade.', points: -6 },
+    { key: 'fishingLine', sprite: 'fishingLine.png', name: 'Fishing Line', blurb: 'Discarded fishing line can entangle fish, birds, and other wildlife, causing injury or death.', points: -7 }
 ];
+
 
 
 
@@ -208,6 +210,7 @@ function showLevelSummary() {
     trashItems.forEach(t => summary += `- ${t.name} (negative points)\n`);
     alert(summary);
 }
+
 
 
 
