@@ -140,7 +140,7 @@ function create() {
         const randX = Phaser.Math.FloatBetween(0.1, 0.9);
         const randY = Phaser.Math.FloatBetween(0.3, 0.8);
         const rock = this.physics.add.sprite(w * randX, h * randY, 'rock')
-            .setScale(Phaser.Math.FloatBetween(0.4, 0.5))
+            .setScale(Phaser.Math.FloatBetween(0.25, 0.35))
             .setInteractive()
             .setDepth(2);
 
@@ -251,6 +251,7 @@ function showLevelSummary() {
         window.location.reload();
     }
 }
+
 
 
 
