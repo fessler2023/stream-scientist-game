@@ -117,7 +117,7 @@ function create() {
     });
 
     // Trees (randomized top border)
-    const treeCount = 12;
+    const treeCount = 24;
     for (let i = 0; i < treeCount; i++) {
         const randX = Phaser.Math.FloatBetween(0, 1);
         const scale = Phaser.Math.FloatBetween(0.5, 0.7);
@@ -251,6 +251,7 @@ function showLevelSummary() {
         window.location.reload();
     }
 }
+
 
 
 
