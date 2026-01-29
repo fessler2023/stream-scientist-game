@@ -37,7 +37,7 @@ let titleText, titleBg; // Game title bar
 let rockFlipSound, ambientSound, trashSound; // Audio
 
 let clickedCount = 0; // Tracks total rocks clicked
-let totalRocks = 12; // Rocks per level
+let totalRocks = 18; // Rocks per level
 let collectedBugs = []; // Stores names of bugs found
 let flippedTrash = []; // Stores names of trash items found
 
@@ -117,7 +117,7 @@ function create() {
     });
 
     // Trees (randomized top border)
-    const treeCount = 10;
+    const treeCount = 12;
     for (let i = 0; i < treeCount; i++) {
         const randX = Phaser.Math.FloatBetween(0, 1);
         const scale = Phaser.Math.FloatBetween(0.5, 0.7);
@@ -251,6 +251,7 @@ function showLevelSummary() {
         window.location.reload();
     }
 }
+
 
 
 
