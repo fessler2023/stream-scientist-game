@@ -1,14 +1,13 @@
 /*
 ========================================================================
-Program: The Adventures of Little Doug - Level 1
+Program: The Adventures of Little Doug - Level 1 (Mobile Friendly)
 Author: Douglas Fessler
 Date: 2026-01-25
 Description: 
-    This is an educational interactive game using Phaser 3. The player 
-    explores a stream environment, flips rocks to discover macroinvertebrates 
-    (bugs that indicate water quality) or trash items. Finding bugs 
-    increases the score, while trash reduces it. Players learn about 
-    stream ecology, pollution, and the importance of keeping waterways clean.
+    Educational interactive game using Phaser 3.
+    Player explores a stream environment, flips rocks to discover 
+    macroinvertebrates or trash items. Mobile touch and desktop 
+    keyboard/mouse supported.
 ========================================================================
 */
 
@@ -16,30 +15,35 @@ Description:
 // Phaser Config
 // -------------------------
 const config = {
-    type: Phaser.AUTO, // Phaser chooses WebGL or Canvas automatically
-    width: window.innerWidth, // Full browser width
-    height: window.innerHeight, // Full browser height
-    backgroundColor: '#5DADE2', // Sky blue background
-    physics: { default: 'arcade', arcade: { debug: false } }, // Arcade physics engine, no debug
-    scene: { preload, create, update }, // Game lifecycle methods
-    scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH } // Resize to fit window, center
+    type: Phaser.AUTO,
+    width: window.innerWidth,
+    height: window.innerHeight,
+    backgroundColor: '#5DADE2',
+    physics: { default: 'arcade', arcade: { debug: false } },
+    scene: { preload, create, update },
+    scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH }
 };
 
-const game = new Phaser.Game(config); // Create the Phaser game
+const game = new Phaser.Game(config);
 
 // -------------------------
 // Globals
 // -------------------------
-let player, cursors; // Player sprite and keyboard input
-let rocks = [], envSprites = []; // Arrays for rocks and environment sprites
-let score = 0, scoreText; // Score and display text
-let titleText, titleBg; // Game title bar
-let rockFlipSound, ambientSound, trashSound; // Audio
+let player, cursors;
+let rocks = [], envSprites = [];
+let score = 0, scoreText;
+let titleText, titleBg;
+let rockFlipSound, ambientSound, trashSound;
 
-let clickedCount = 0; // Tracks total rocks clicked
-let totalRocks = 18; // Rocks per level
-let collectedBugs = []; // Stores names of bugs found
-let flippedTrash = []; // Stores names of trash items found
+let clickedCount = 0;
+let totalRocks = 18;
+let collectedBugs = [];
+let flippedTrash = [];
+
+// -------------------------
+// Mobile Detection
+// -------------------------
+const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 // -------------------------
 // Macroinvertebrates Data
@@ -68,7 +72,7 @@ const trashItems = [
 ];
 
 // -------------------------
-// Environment Data (bushes only)
+// Environment Data
 // -------------------------
 const bushes = [
     { key: 'bush', x: 0.85, y: 0.2, scale: 0.3 },
@@ -81,18 +85,16 @@ const bushes = [
 // Preload
 // -------------------------
 function preload() {
-    // Load images
     this.load.image('player', 'player.png');
     this.load.image('rock', 'rock.png');
     this.load.image('tree', 'tree.png');
-    bushes.forEach(b => this.load.image(b.key, b.key + '.png')); // bushes
-    macroinvertebrates.forEach(critter => this.load.image(critter.key, critter.sprite)); // bugs
-    trashItems.forEach(t => this.load.image(t.key, t.sprite)); // trash
+    bushes.forEach(b => this.load.image(b.key, b.key + '.png'));
+    macroinvertebrates.forEach(critter => this.load.image(critter.key, critter.sprite));
+    trashItems.forEach(t => this.load.image(t.key, t.sprite));
 
-    // Load sounds
-    this.load.audio('rockFlip', 'rockFlip.wav'); // rock flip
-    this.load.audio('ambientWater', 'ambientWater.wav'); // looping background water
-    this.load.audio('trashSound', 'trash.wav'); // trash noise
+    this.load.audio('rockFlip', 'rockFlip.wav');
+    this.load.audio('ambientWater', 'ambientWater.wav');
+    this.load.audio('trashSound', 'trash.wav');
 }
 
 // -------------------------
@@ -102,21 +104,17 @@ function create() {
     const w = this.scale.width;
     const h = this.scale.height;
 
-    // Title Bar
     titleBg = this.add.rectangle(w/2, 0, w, 40, 0x000000, 0.4).setOrigin(0.5,0).setDepth(10);
     titleText = this.add.text(w/2, 8, 'The Adventures of Little Doug', { font:'22px Arial', fill:'#fff', fontStyle:'bold' })
         .setOrigin(0.5,0).setDepth(11);
 
-    // Score Text
     scoreText = this.add.text(10, 50, 'Score: 0', { font:'18px Arial', fill:'#fff' }).setDepth(11);
 
-    // Add bushes
     bushes.forEach(obj => {
         const sprite = this.add.image(w*obj.x, h*obj.y, obj.key).setScale(obj.scale).setDepth(1);
         envSprites.push(sprite);
     });
 
-    // Trees (randomized top border)
     const treeCount = 24;
     for (let i = 0; i < treeCount; i++) {
         const randX = Phaser.Math.FloatBetween(0, 1);
@@ -125,11 +123,11 @@ function create() {
         this.add.image(w * randX, h * 0.05, 'tree').setScale(scale).setDepth(depth);
     }
 
-    // Player sprite
     player = this.physics.add.sprite(w/2, h*0.8, 'player').setScale(0.5).setCollideWorldBounds(true).setDepth(2);
-    cursors = this.input.keyboard.createCursorKeys();
 
-    // Load sounds
+    // Desktop keyboard controls only
+    if(!IS_MOBILE) cursors = this.input.keyboard.createCursorKeys();
+
     rockFlipSound = this.sound.add('rockFlip', { volume: 0.5 });
     ambientSound = this.sound.add('ambientWater', { loop: true, volume: 0.3 });
     ambientSound.play();
@@ -146,47 +144,53 @@ function create() {
 
         rocks.push(rock);
 
-        // Rock click handler
-        rock.on('pointerdown', () => {
-            if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
-                // Randomly choose trash (20%) or bug (80%)
-                let isTrash = Phaser.Math.Between(1, 100) <= 20;
-                let content;
-                if(isTrash) {
-                    content = Phaser.Utils.Array.GetRandom(trashItems);
-                    trashSound.play();
-                    score += content.points;
-                    flippedTrash.push(content.name);
-                } else {
-                    content = Phaser.Utils.Array.GetRandom(macroinvertebrates);
-                    rockFlipSound.play();
-                    score += 10;
-                    collectedBugs.push(content.name);
-                }
-
-                rock.destroy(); // remove rock
-                scoreText.setText('Score: ' + score);
-                updateExplorer(content); // update explorer panel
-                clickedCount++;
-                if(clickedCount >= totalRocks) showLevelSummary();
-            } else console.log('Move closer to flip the rock!');
-        });
+        rock.on('pointerdown', () => handleRockInteraction(rock));
     }
 
-    // Handle window resize
     window.addEventListener('resize', resizeGame);
+}
+
+// -------------------------
+// Rock Interaction
+// -------------------------
+function handleRockInteraction(rock) {
+    if(IS_MOBILE || Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
+        let isTrash = Phaser.Math.Between(1, 100) <= 20;
+        let content;
+        if(isTrash) {
+            content = Phaser.Utils.Array.GetRandom(trashItems);
+            trashSound.play();
+            score += content.points;
+            flippedTrash.push(content.name);
+        } else {
+            content = Phaser.Utils.Array.GetRandom(macroinvertebrates);
+            rockFlipSound.play();
+            score += 10;
+            collectedBugs.push(content.name);
+        }
+
+        rock.destroy();
+        scoreText.setText('Score: ' + score);
+        updateExplorer(content);
+        clickedCount++;
+        if(clickedCount >= totalRocks) showLevelSummary();
+    } else if(!IS_MOBILE) {
+        console.log('Move closer to flip the rock!');
+    }
 }
 
 // -------------------------
 // Update
 // -------------------------
 function update() {
-    player.setVelocity(0);
-    const speed = 200;
-    if(cursors.left.isDown) player.setVelocityX(-speed);
-    else if(cursors.right.isDown) player.setVelocityX(speed);
-    if(cursors.up.isDown) player.setVelocityY(-speed);
-    else if(cursors.down.isDown) player.setVelocityY(speed);
+    if(!IS_MOBILE && cursors) {
+        player.setVelocity(0);
+        const speed = 200;
+        if(cursors.left.isDown) player.setVelocityX(-speed);
+        else if(cursors.right.isDown) player.setVelocityX(speed);
+        if(cursors.up.isDown) player.setVelocityY(-speed);
+        else if(cursors.down.isDown) player.setVelocityY(speed);
+    }
 }
 
 // -------------------------
@@ -216,46 +220,29 @@ function updateExplorer(item) {
 }
 
 // -------------------------
-// Level Summary with Optional Feedback
+// Level Summary
 // -------------------------
 function showLevelSummary() {
-    // Build the summary text
     let summary = `Level Complete!\nScore: ${score}\n\nBugs Collected:\n`;
-    
     const bugCounts = collectedBugs.reduce((acc, name) => {
         acc[name] = (acc[name] || 0) + 1;
         return acc;
     }, {});
-    
-    for (let bug in bugCounts) {
-        summary += `- ${bug} x${bugCounts[bug]}\n`;
-    }
+    for (let bug in bugCounts) summary += `- ${bug} x${bugCounts[bug]}\n`;
 
     summary += `\nTrash Collected:\n`;
     trashItems.forEach(t => summary += `- ${t.name} (negative points)\n`);
 
-    // Show the alert summary
     alert(summary);
 
-    // Ask for feedback
     const wantsFeedback = confirm("Would you like to provide feedback on this level? Click OK to go to the feedback form, or Cancel to continue playing.");
-
-    if (wantsFeedback) {
-        // Open the Google Form in a new tab
+    if(wantsFeedback) {
         window.open(
             "https://docs.google.com/forms/d/e/1FAIpQLScFHSVlx0Fp4j5Kp8qVK7krCadWA7juq-U34Pt_ZWN8IUARKw/viewform?usp=sf_link",
             "_blank"
         );
     } else {
-        // Reload the page to reset the level
         window.location.reload();
     }
 }
-
-
-
-
-
-
-
 
