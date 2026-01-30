@@ -11,8 +11,10 @@ body {
     position: absolute;
     bottom: 10px;
     left: 10px;
-    width: 270px;           /* wider */
-    height: 340px;          /* taller */
+    width: 90vw;          /* flexible width for mobile */
+    max-width: 270px;      /* desktop cap */
+    height: auto;
+    max-height: 340px;     /* desktop cap */
     padding: 10px;
     background: rgba(0,0,0,0.7);
     border: 2px solid #fff;
@@ -35,9 +37,10 @@ body {
 
 /* Insect Image */
 #explorer img {
-    width: 140px;
-    height: 140px;
-    background-color: #fff;   /* white background for image */
+    width: 50vw;            /* scales on mobile */
+    max-width: 140px;       /* desktop cap */
+    height: auto;
+    background-color: #fff;
     image-rendering: pixelated;
     display: block;
     margin-bottom: 8px;
@@ -61,4 +64,3 @@ body {
     text-align: center;
     color: #fff;
 }
-
