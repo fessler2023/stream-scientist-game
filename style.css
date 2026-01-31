@@ -8,13 +8,11 @@ body {
 
 /* Explorer / Field Journal Panel */
 #explorer {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    width: 90vw;          /* flexible width for mobile */
-    max-width: 270px;      /* desktop cap */
-    height: auto;
-    max-height: 340px;     /* desktop cap */
+    position: fixed;       /* fixed so it stays in viewport */
+    bottom: 20px;
+    left: 20px;
+    width: 270px;
+    height: 340px;
     padding: 10px;
     background: rgba(0,0,0,0.7);
     border: 2px solid #fff;
@@ -23,6 +21,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    z-index: 999;
 }
 
 /* Field Journal Title */
@@ -37,9 +36,8 @@ body {
 
 /* Insect Image */
 #explorer img {
-    width: 50vw;            /* scales on mobile */
-    max-width: 140px;       /* desktop cap */
-    height: auto;
+    width: 140px;
+    height: 140px;
     background-color: #fff;
     image-rendering: pixelated;
     display: block;
@@ -64,3 +62,50 @@ body {
     text-align: center;
     color: #fff;
 }
+
+/* ------------------ Mobile D-Pad ------------------ */
+#mobileControls {
+    display: none;               /* hidden by default, shown only on touch devices */
+    position: fixed;             /* pinned to viewport */
+    bottom: 60px;                /* move D-pad up a bit */
+    right: 20px;                 /* distance from right */
+    width: 140px;                /* slightly bigger for all buttons */
+    height: 140px;
+    z-index: 9999;
+    pointer-events: auto;
+    flex-direction: column;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* D-pad rows */
+.dpad-row {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin: 2px 0;
+}
+
+/* D-pad buttons */
+.dpad-btn {
+    width: 60px;                /* match up/down with left/right */
+    height: 60px;
+    line-height: 60px;          /* center the arrow vertically */
+    background: rgba(0,0,0,0.7);
+    border: 2px solid #fff;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 24px;
+    color: #fff;
+    user-select: none;
+    box-shadow: 0 0 4px #fff;
+    transition: background 0.1s, transform 0.1s;
+}
+
+.dpad-btn:active {
+    background: rgba(255,255,255,0.4);
+    transform: scale(0.95);
+}
+
