@@ -2,12 +2,10 @@
 ========================================================================
 Program: The Adventures of Little Doug - Level 1 (Mobile Friendly)
 Author: Douglas Fessler
-Date: 2026-01-25
+Date: 2026-01-30
 Description: 
     Educational interactive game using Phaser 3.
-    Player explores a stream environment, flips rocks to discover 
-    macroinvertebrates or trash items. Mobile touch and desktop 
-    keyboard/mouse supported.
+    Supports desktop (keyboard/mouse) and mobile (touch buttons) seamlessly.
 ========================================================================
 */
 
@@ -40,13 +38,10 @@ let totalRocks = 18;
 let collectedBugs = [];
 let flippedTrash = [];
 
-// -------------------------
-// Mobile Detection
-// -------------------------
-const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+let mobileVelocity = { x: 0, y: 0 }; // mobile touch control velocity
 
 // -------------------------
-// Macroinvertebrates Data
+// Data
 // -------------------------
 const macroinvertebrates = [
     { key: 'caddisfly', sprite: 'caddisfly.png', name: 'Caddisfly Larva', blurb: 'Caddisfly larvae often build protective cases from sand and twigs. They indicate clean water and help stabilize streambeds.' },
@@ -58,9 +53,6 @@ const macroinvertebrates = [
     { key: 'aquaticworm', sprite: 'aquaticworm.png', name: 'Aquatic Worm', blurb: 'Aquatic worms are detritivores, breaking down organic matter and recycling nutrients in streams. They improve water quality and provide food for fish.' }
 ];
 
-// -------------------------
-// Trash Data
-// -------------------------
 const trashItems = [
     { key: 'plastic', sprite: 'plastic.png', name: 'Plastic Bottle', blurb: 'Plastic trash harms aquatic life, pollutes streams, and can break down into microplastics that enter the food chain.', points: -5 },
     { key: 'can', sprite: 'can.png', name: 'Aluminum Can', blurb: 'Litter left on land often ends up in waterways. Recycling cans helps conserve resources and protect wildlife.', points: -5 },
@@ -71,9 +63,6 @@ const trashItems = [
     { key: 'fishingLine', sprite: 'fishingLine.png', name: 'Fishing Line', blurb: 'Discarded fishing line can entangle fish, birds, and other wildlife, causing injury or death.', points: -7 }
 ];
 
-// -------------------------
-// Environment Data
-// -------------------------
 const bushes = [
     { key: 'bush', x: 0.85, y: 0.2, scale: 0.3 },
     { key: 'bush', x: 0.75, y: 0.85, scale: 0.3 },
@@ -104,17 +93,20 @@ function create() {
     const w = this.scale.width;
     const h = this.scale.height;
 
+    // Title bar
     titleBg = this.add.rectangle(w/2, 0, w, 40, 0x000000, 0.4).setOrigin(0.5,0).setDepth(10);
-    titleText = this.add.text(w/2, 8, 'The Adventures of Little Doug', { font:'22px Arial', fill:'#fff', fontStyle:'bold' })
-        .setOrigin(0.5,0).setDepth(11);
+    titleText = this.add.text(w/2, 8, 'The Adventures of Little Doug', { font:'22px Arial', fill:'#fff', fontStyle:'bold' }).setOrigin(0.5,0).setDepth(11);
 
+    // Score text
     scoreText = this.add.text(10, 50, 'Score: 0', { font:'18px Arial', fill:'#fff' }).setDepth(11);
 
+    // Bushes
     bushes.forEach(obj => {
         const sprite = this.add.image(w*obj.x, h*obj.y, obj.key).setScale(obj.scale).setDepth(1);
         envSprites.push(sprite);
     });
 
+    // Trees
     const treeCount = 24;
     for (let i = 0; i < treeCount; i++) {
         const randX = Phaser.Math.FloatBetween(0, 1);
@@ -123,11 +115,11 @@ function create() {
         this.add.image(w * randX, h * 0.05, 'tree').setScale(scale).setDepth(depth);
     }
 
+    // Player sprite
     player = this.physics.add.sprite(w/2, h*0.8, 'player').setScale(0.5).setCollideWorldBounds(true).setDepth(2);
+    cursors = this.input.keyboard.createCursorKeys();
 
-    // Desktop keyboard controls only
-    if(!IS_MOBILE) cursors = this.input.keyboard.createCursorKeys();
-
+    // Sounds
     rockFlipSound = this.sound.add('rockFlip', { volume: 0.5 });
     ambientSound = this.sound.add('ambientWater', { loop: true, volume: 0.3 });
     ambientSound.play();
@@ -144,53 +136,76 @@ function create() {
 
         rocks.push(rock);
 
-        rock.on('pointerdown', () => handleRockInteraction(rock));
+        rock.on('pointerdown', () => {
+            if (Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
+                let isTrash = Phaser.Math.Between(1, 100) <= 20;
+                let content;
+                if(isTrash) {
+                    content = Phaser.Utils.Array.GetRandom(trashItems);
+                    trashSound.play();
+                    score += content.points;
+                    flippedTrash.push(content.name);
+                } else {
+                    content = Phaser.Utils.Array.GetRandom(macroinvertebrates);
+                    rockFlipSound.play();
+                    score += 10;
+                    collectedBugs.push(content.name);
+                }
+
+                rock.destroy();
+                scoreText.setText('Score: ' + score);
+                updateExplorer(content);
+                clickedCount++;
+                if(clickedCount >= totalRocks) showLevelSummary();
+            } else console.log('Move closer to flip the rock!');
+        });
     }
 
-    window.addEventListener('resize', resizeGame);
+// Mobile Controls detection
+const mobileDiv = document.getElementById("mobileControls");
+const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+if (isTouchDevice && mobileDiv) {
+    // Show D-pad for touch devices only
+    mobileDiv.style.display = "flex";  // use flex so buttons align correctly
+
+    ["up","down","left","right"].forEach(dir => {
+        const el = document.getElementById(dir);
+        el.addEventListener("touchstart", () => {
+            mobileVelocity = {x:0, y:0};
+            if(dir==="left") mobileVelocity.x = -1;
+            if(dir==="right") mobileVelocity.x = 1;
+            if(dir==="up") mobileVelocity.y = -1;
+            if(dir==="down") mobileVelocity.y = 1;
+        });
+        el.addEventListener("touchend", () => { mobileVelocity = {x:0, y:0}; });
+    });
+} else if (mobileDiv) {
+    // Hide D-pad for non-touch devices
+    mobileDiv.style.display = "none";
 }
 
-// -------------------------
-// Rock Interaction
-// -------------------------
-function handleRockInteraction(rock) {
-    if(IS_MOBILE || Phaser.Math.Distance.Between(player.x, player.y, rock.x, rock.y) < 60) {
-        let isTrash = Phaser.Math.Between(1, 100) <= 20;
-        let content;
-        if(isTrash) {
-            content = Phaser.Utils.Array.GetRandom(trashItems);
-            trashSound.play();
-            score += content.points;
-            flippedTrash.push(content.name);
-        } else {
-            content = Phaser.Utils.Array.GetRandom(macroinvertebrates);
-            rockFlipSound.play();
-            score += 10;
-            collectedBugs.push(content.name);
-        }
 
-        rock.destroy();
-        scoreText.setText('Score: ' + score);
-        updateExplorer(content);
-        clickedCount++;
-        if(clickedCount >= totalRocks) showLevelSummary();
-    } else if(!IS_MOBILE) {
-        console.log('Move closer to flip the rock!');
-    }
+    // Window resize
+    window.addEventListener('resize', resizeGame);
 }
 
 // -------------------------
 // Update
 // -------------------------
 function update() {
-    if(!IS_MOBILE && cursors) {
-        player.setVelocity(0);
-        const speed = 200;
-        if(cursors.left.isDown) player.setVelocityX(-speed);
-        else if(cursors.right.isDown) player.setVelocityX(speed);
-        if(cursors.up.isDown) player.setVelocityY(-speed);
-        else if(cursors.down.isDown) player.setVelocityY(speed);
-    }
+    // Default keyboard velocity
+    player.setVelocity(0);
+    const speed = 200;
+
+    if(cursors.left.isDown) player.setVelocityX(-speed);
+    else if(cursors.right.isDown) player.setVelocityX(speed);
+    if(cursors.up.isDown) player.setVelocityY(-speed);
+    else if(cursors.down.isDown) player.setVelocityY(speed);
+
+    // Mobile override
+    if(mobileVelocity.x !== 0) player.setVelocityX(mobileVelocity.x * speed);
+    if(mobileVelocity.y !== 0) player.setVelocityY(mobileVelocity.y * speed);
 }
 
 // -------------------------
@@ -224,25 +239,21 @@ function updateExplorer(item) {
 // -------------------------
 function showLevelSummary() {
     let summary = `Level Complete!\nScore: ${score}\n\nBugs Collected:\n`;
+    
     const bugCounts = collectedBugs.reduce((acc, name) => {
         acc[name] = (acc[name] || 0) + 1;
         return acc;
     }, {});
+    
     for (let bug in bugCounts) summary += `- ${bug} x${bugCounts[bug]}\n`;
-
+    
     summary += `\nTrash Collected:\n`;
     trashItems.forEach(t => summary += `- ${t.name} (negative points)\n`);
 
     alert(summary);
 
-    const wantsFeedback = confirm("Would you like to provide feedback on this level? Click OK to go to the feedback form, or Cancel to continue playing.");
-    if(wantsFeedback) {
-        window.open(
-            "https://docs.google.com/forms/d/e/1FAIpQLScFHSVlx0Fp4j5Kp8qVK7krCadWA7juq-U34Pt_ZWN8IUARKw/viewform?usp=sf_link",
-            "_blank"
-        );
-    } else {
-        window.location.reload();
-    }
+    const wantsFeedback = confirm("Would you like to provide feedback on this level?");
+    if (wantsFeedback) window.open("https://docs.google.com/forms/d/e/1FAIpQLScFHSVlx0Fp4j5Kp8qVK7krCadWA7juq-U34Pt_ZWN8IUARKw/viewform?usp=sf_link","_blank");
+    else window.location.reload();
 }
 
